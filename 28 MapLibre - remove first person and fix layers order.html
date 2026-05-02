@@ -1,0 +1,2580 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Geo Dashboard - MapLibre</title>
+
+<link href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css" rel="stylesheet"/>
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<style>
+
+html, body { 
+  margin: 0; 
+  padding: 0; 
+  height: 100vh; 
+  overflow: hidden; 
+}
+
+.container {
+  display: flex; /* Flexbox is safer for side-by-side scrolling */
+  width: 100vw;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 200px;
+  min-width: 200px;
+  background: #111;
+  color: #fff;
+  padding: 10px;
+  overflow-y: auto; /* Independent scroll for sidebar */
+  height: 100vh;
+  box-sizing: border-box;
+  border-right: 1px solid #333;
+  z-index: 10;
+}
+
+#map-section {
+  flex-grow: 1;
+  position: relative;
+  height: 100vh;
+}
+
+/* Button Colors */
+.btn-nav { background: #444 !important; color: #fff !important; border: 1px solid #555 !important; font-weight: bold; }
+.btn-dark { background: #222 !important; color: #ccc !important; border: 1px solid #3a3a3a !important; cursor: grab; }
+
+.btn-dark svg, .btn-light svg, .btn-nav svg {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+#coords {
+  margin-top: 15px;
+  font-family: monospace;
+  font-size: 14px;
+  color: #00ff00;
+}
+#coords div { margin-bottom: 5px; }
+
+/* Section Dividers */
+.sidebar-section {
+  border-bottom: 1px solid #333;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.sidebar h3 {
+  font-size: 14px;
+  color: #888;
+  margin: 5px 0;
+}
+
+/* Light Gray Theme for View Mode */
+.btn-light {
+  background: #444 !important;
+  color: #ccc !important;
+  border: 1px solid #3a3a3a !important;
+  font-weight: bold;
+}
+
+.btn-light:hover {
+  background: #555 !important;
+}
+
+/* Dark Button Theme */
+.btn-dark {
+  background: #222 !important;
+  color: #ccc !important;
+  border: 1px solid #3a3a3a !important;
+  transition: background 0.2s;
+}
+
+.btn-dark:hover {
+  background: #333 !important;
+  color: #fff !important;
+}
+
+/* Coordinate Stack */
+#coords {
+  margin-top: 15px;
+  font-family: monospace;
+  font-size: 13px;
+  color: #0f0; /* Green color for visibility */
+}
+
+.sidebar button[draggable="true"] {
+  cursor: grab;
+}
+
+/* Optional: Change to closed hand while dragging */
+.sidebar button[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+button {
+  width:100%;
+  margin:5px 0;
+  padding:6px;
+  cursor:pointer;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  height: 100vh; /* Changed from 100% to 100vh */
+  width: 100%;
+}
+
+.map { position:relative; }
+
+.hidden { display:none; }
+
+/* crosshair */
+.crosshair {
+  position:absolute;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  z-index:9999;
+}
+
+.crosshair::before,
+.crosshair::after {
+  content:'';
+  position:absolute;
+  background:red;
+}
+
+.crosshair::before {
+  width:1px;
+  height:12px;
+  left:50%;
+  top:calc(50% - 6px);
+}
+
+.crosshair::after {
+  height:1px;
+  width:12px;
+  top:50%;
+  left:calc(50% - 6px);
+}
+
+#coords {
+  margin-top:10px;
+  font-size:12px;
+}
+
+#compare {
+  position:relative;
+  width:100%;
+  height:100%;
+}
+
+#cmpA, #cmpB {
+  position:absolute;
+  top:0;
+  bottom:0;
+  width:100%;
+  height:100%;
+  pointer-events: auto;
+}
+
+#cmpA { z-index:1; }
+#cmpB { z-index:2; }
+
+#divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 4px;
+  background: white;
+  z-index: 1001;
+  cursor: ew-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#divider .crosshair,
+#compare > .crosshair {
+  display: none !important;
+}
+
+#cmpA .crosshair, #cmpB .crosshair {
+  display: block !important;
+  pointer-events: none;
+  z-index: 10;
+}
+
+#cmpA .crosshair::before, #cmpA .crosshair::after,
+#cmpB .crosshair::before, #cmpB .crosshair::after {
+  display: block !important;
+}
+
+#divider::after {
+  content: '|||';
+  color: #666;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: white;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+
+#coords {
+  margin-top: 15px;
+  font-family: monospace;
+  font-size: 14px;
+  color: #00ff00; /* Green visibility */
+  display: block;
+}
+
+#coords div {
+  margin-bottom: 5px;
+}
+
+.maplibregl-canvas {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23c62828' stroke-width='1.8'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23c62828'/%3E%3C/svg%3E") 16 16, crosshair !important;
+}
+
+.nuke-popup .maplibregl-popup-content {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+  max-width: 250px;
+}
+.nuke-popup .maplibregl-popup-tip {
+  border-top-color: #fff;
+}
+
+/* Circular White Housing */
+.maplibregl-ctrl-group {
+    background: #ffffff !important;
+    border: 1px solid #ccc !important;
+    border-radius: 50% !important;
+    width: 32px;
+    height: 32px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Remove default black arrow icon */
+.maplibregl-ctrl-compass-arrow {
+    background-image: none !important;
+    width: 24px !important;
+    height: 24px !important;
+    position: relative;
+    display: block;
+}
+
+/* Red North Needle */
+.maplibregl-ctrl-compass-arrow::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    margin-left: -5px;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 12px solid #ff0000; /* Vibrant Red */
+}
+
+/* Light Grey South Needle */
+.maplibregl-ctrl-compass-arrow::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    margin-left: -5px;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 12px solid #e0e0e0; /* Clean Grey */
+}
+
+/* Hover state */
+.maplibregl-ctrl-group button:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    border-radius: 50%;
+}
+
+.maplibregl-ctrl-scale {
+    border-top: none !important;
+    border-left: 2px solid #000 !important;
+    border-right: 2px solid #000 !important;
+    border-bottom: 2px solid #000 !important;
+    background: rgba(255,255,255,0.8) !important;
+    color: #000 !important;
+    font-size: 11px !important;
+    padding: 2px 4px !important;
+}
+
+.custom-search-ctrl {
+  position: relative;
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+.custom-search-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  z-index: 2;
+}
+.custom-search-btn svg { pointer-events: none; }
+.custom-search-box {
+  position: absolute;
+  right: 0; top: 0;
+  width: 32px; height: 32px;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  overflow: hidden;
+  transition: width 0.2s ease;
+  display: flex; align-items: center;
+  z-index: 1;
+}
+.custom-search-box.open,
+.custom-search-ctrl:hover .custom-search-box {
+  width: 260px;
+  overflow: visible;
+  border-radius: 16px;
+}
+.custom-search-ctrl:hover .custom-search-input { opacity: 1; }
+.custom-search-ctrl:hover .custom-search-clear { display: flex; }
+
+.custom-search-ctrl:hover .custom-search-btn,
+.custom-search-box.open ~ .custom-search-btn {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.custom-search-input {
+  border: none; outline: none;
+  font-size: 12px; width: 100%;
+  padding: 0 36px 0 12px;
+  background: transparent;
+  height: 32px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.custom-search-box.open .custom-search-input { opacity: 1; }
+.custom-search-results {
+  position: absolute;
+  top: 36px; right: 0;
+  width: 260px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+}
+.custom-search-results.visible { display: block; }
+.custom-search-result-item {
+  padding: 8px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  color: #333;
+  line-height: 1.4;
+}
+.custom-search-result-item:last-child { border-bottom: none; }
+.custom-search-result-item:hover { background: #f5f5f5; }
+.custom-search-clear {
+  position: absolute;
+  right: 8px; top: 50%;
+  transform: translateY(-50%);
+  width: 16px; height: 16px;
+  cursor: pointer;
+  display: none;
+  align-items: center; justify-content: center;
+  color: #999; font-size: 14px; font-weight: bold;
+  z-index: 3;
+}
+.custom-search-box.open .custom-search-clear { display: flex; }
+
+/* Container for the stack of active layers */
+.map-layer-label-container {
+    position: absolute;
+    bottom: 60px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Specific Fix for Right Map in Side-by-Side: Bottom Right */
+#cmpB .map-layer-label-container {
+    left: auto;
+    right: 20px;
+    align-items: flex-end;
+}
+
+/* Subtle Gray Professional Tag */
+.layer-tag {
+    background: rgba(40, 42, 45, 0.8) !important; /* Neutral dark gray */
+    color: #e0e0e0 !important;                  /* Light gray text (not pure white) */
+    padding: 5px 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important; /* Very faint border */
+    border-left: 3px solid #70757a !important;   /* Medium gray accent bar */
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: fit-content;
+    backdrop-filter: blur(8px);                 /* Soft glass effect */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Flip the accent bar for the right-hand map (cmpB) */
+#cmpB .layer-tag {
+    border-left: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-right: 3px solid #70757a !important;  /* Bar moves to right side */
+}
+
+/* Individual Label Styling */
+.layer-tag {
+    background: rgba(0, 0, 0, 0.8);
+    color: #ff0000;
+    padding: 4px 10px;
+    border: 1px solid #ff0000;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    width: fit-content;
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.2);
+}
+
+.btn-nav.active {
+  background: #3c4043 !important; /* Neutral dark grey */
+  color: #ffffff !important;
+  border: 1px solid #5f6368 !important;
+  box-shadow: none !important;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+	<div class="sidebar">
+
+		<div class="sidebar-section">
+			<h3>View Mode</h3>
+			<button class="btn-light" onclick="setMode('grid')"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="0" y="0" width="5.5" height="5.5"/><rect x="7.5" y="0" width="5.5" height="5.5"/><rect x="0" y="7.5" width="5.5" height="5.5"/><rect x="7.5" y="7.5" width="5.5" height="5.5"/></svg> Quadrants</button>
+			<button class="btn-light" onclick="setMode('compare')"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="0" y="0" width="5.5" height="13"/><rect x="7.5" y="0" width="5.5" height="13"/></svg> Side-by-side</button>
+			<button class="btn-light" onclick="openStreetNav()"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6.5" cy="3" r="2"/><path d="M4 13 L4 8 Q6.5 6 9 8 L9 13"/><line x1="6.5" y1="5" x2="6.5" y2="6"/></svg> Street Nav.</button>
+			<button class="btn-light" onclick="window.location.reload()">=====Street Trip</button>
+			<button class="btn-light" onclick="openTerrainNav()"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3"><polyline points="0,13 4,4 7,8 9,5 13,13"/></svg> 3D Terrain Nav.</button>
+		</div>
+
+		<div class="sidebar-section">
+			<h3>Base Maps</h3>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="dark"><svg width="13" height="13" viewBox="0 0 13 13"><rect width="13" height="13" fill="#333" stroke="#666" stroke-width="1"/></svg> Black</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="countries"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.2"><circle cx="6.5" cy="6.5" r="5.5"/><line x1="1" y1="6.5" x2="12" y2="6.5"/><path d="M6.5 1 C4 3.5 4 9.5 6.5 12 C9 9.5 9 3.5 6.5 1Z"/></svg> Countries</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="cyclo"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.2"><circle cx="3.5" cy="9" r="2.5"/><circle cx="9.5" cy="9" r="2.5"/><polyline points="3.5,9 5.5,4 8,4"/><line x1="5.5" y1="4" x2="9.5" y2="9"/><circle cx="8" cy="4" r="1"/></svg> CycloOSM</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="hot"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.2"><circle cx="6.5" cy="6.5" r="5.5"/><line x1="6.5" y1="2" x2="6.5" y2="11"/><line x1="2" y1="6.5" x2="11" y2="6.5"/></svg> Humanitarian</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="terrain"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.2"><polyline points="0,13 3,7 6,10 9,4 13,13"/><polyline points="0,11 2,9 4,11" stroke-dasharray="1 1" stroke-width="0.8"/></svg> Terrain</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="sat"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.1"><rect x="5" y="4" width="3" height="3" rx="0.5"/><line x1="6.5" y1="4" x2="6.5" y2="1.5"/><rect x="4.5" y="0.5" width="4" height="1.5" rx="0.3"/><line x1="5" y1="7" x2="2.5" y2="9.5"/><rect x="0.5" y="9" width="4" height="1.5" rx="0.3" transform="rotate(-45 2.5 9.75)"/><line x1="8" y1="7" x2="10.5" y2="9.5"/><rect x="8.5" y="9" width="4" height="1.5" rx="0.3" transform="rotate(-45 10.5 9.75)"/><circle cx="10" cy="3" r="1.2" stroke-dasharray="1 0.8"/></svg> Satellite</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="terrain3d"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.1"><polyline points="0,13 3,6 6,9 9,3 13,13"/><path d="M0,10 Q3,8 6,10 Q9,8 13,10" stroke-width="0.7" opacity="0.6"/><path d="M0,12 Q3,11 6,12 Q9,11 13,12" stroke-width="0.7" opacity="0.4"/></svg> 3D Terrain</button>
+
+		</div>
+
+		<div class="sidebar-section">
+			<h3>Layers</h3>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="quakes"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.2"><polyline points="0,7 2,7 4,3 6,11 8,5 10,7 13,7"/></svg> Earthquakes</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="iranoverlays"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.1"><circle cx="6.5" cy="6.5" r="2"/><ellipse cx="6.5" cy="6.5" rx="5.5" ry="2.2" transform="rotate(0 6.5 6.5)"/><ellipse cx="6.5" cy="6.5" rx="5.5" ry="2.2" transform="rotate(60 6.5 6.5)"/><ellipse cx="6.5" cy="6.5" rx="5.5" ry="2.2" transform="rotate(120 6.5 6.5)"/></svg> Iran Overlays</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="overlays"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.1"><circle cx="3" cy="5" r="1.2"/><circle cx="6.5" cy="3" r="1.2"/><circle cx="10" cy="5" r="1.2"/><line x1="1" y1="8" x2="13" y2="8" stroke-dasharray="2 1"/><line x1="1" y1="10.5" x2="13" y2="10.5" stroke-dasharray="1 2"/></svg> Map Overlays</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="viewshed"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.2"><path d="M1 6.5 C4 2 9 2 12 6.5 C9 11 4 11 1 6.5Z"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="7.5" cy="5.5" r="0.8" fill="#ccc"/></svg> Viewshed Analysis</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="naval"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.2"><path d="M2 8 L6.5 2 L11 8 L9 11 L4 11 Z"/><line x1="6.5" y1="2" x2="6.5" y2="5"/><path d="M1 11 Q3 13 6.5 12 Q10 13 12 11" stroke-dasharray="1 1"/></svg> =====Ship movement</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="flight"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1"><circle cx="6.5" cy="6.5" r="5.5" stroke-dasharray="2 1.5"/><circle cx="6.5" cy="6.5" r="3"/><line x1="6.5" y1="1" x2="6.5" y2="3"/><line x1="12" y1="6.5" x2="10" y2="6.5"/></svg> =====Flight radar</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="citylights"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.2"><circle cx="6.5" cy="5" r="2.5"/><line x1="6.5" y1="7.5" x2="6.5" y2="10"/><line x1="4.5" y1="10" x2="8.5" y2="10"/><line x1="2" y1="3" x2="3.5" y2="4"/><line x1="11" y1="3" x2="9.5" y2="4"/><line x1="1" y1="6.5" x2="3" y2="6.5"/><line x1="12" y1="6.5" x2="10" y2="6.5"/></svg> =====City Lights</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="power"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.2"><polyline points="8,1 5,7 8,7 5,12"/></svg> =====Power Grid</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="population"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.1"><circle cx="3" cy="4" r="1.5"/><circle cx="6.5" cy="3" r="1.5"/><circle cx="10" cy="4" r="1.5"/><path d="M1 9 Q3 7 5 9"/><path d="M4.5 8.5 Q6.5 6.5 8.5 8.5"/><path d="M8 9 Q10 7 12 9"/></svg> =====Population</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="weathercloud"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.2"><path d="M3 9 Q1 9 1 7 Q1 5 3 5 Q3.5 3 5.5 3 Q7.5 3 8 5 Q10 5 10 7 Q10 9 8 9 Z"/></svg> =====Weather Clouds</button>
+			<button class="btn-dark" draggable="true" ondragstart="drag(event)" data-type="thermal"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#ccc" stroke-width="1.2"><path d="M5 11 Q3 8 5 6 Q6 4 5 2"/><path d="M7.5 11 Q5.5 8 7.5 6 Q8.5 4 7.5 2"/><path d="M10 11 Q8 8 10 6 Q11 4 10 2"/></svg> =====Thermal</button>
+		</div>
+
+		<div id="coords">
+		  <div id="lat-val">Lat: --</div>
+		  <div id="lng-val">Lng: --</div>
+		</div>
+
+	</div>
+
+	<div id="grid" class="grid">
+	  <div id="q0" class="map" ondrop="drop(event, 0)" ondragover="allowDrop(event)"><div class="crosshair"></div></div>
+	  <div id="q1" class="map" ondrop="drop(event, 1)" ondragover="allowDrop(event)"><div class="crosshair"></div></div>
+	  <div id="q2" class="map" ondrop="drop(event, 2)" ondragover="allowDrop(event)"><div class="crosshair"></div></div>
+	  <div id="q3" class="map" ondrop="drop(event, 3)" ondragover="allowDrop(event)"><div class="crosshair"></div></div>
+	</div>
+
+	<div id="compare" class="hidden">
+		<div id="cmpA" ondrop="drop(event, 'cmpA')" ondragover="allowDrop(event)">
+			<div class="crosshair"></div>
+		</div>
+		<div id="cmpB" ondrop="drop(event, 'cmpB')" ondragover="allowDrop(event)">
+			<div class="crosshair"></div>
+		</div>
+		<div id="divider"></div>
+	</div>
+
+	<div id="streetNav" class="hidden" style="width:100%; height:100%; position:relative;"></div>
+	<div id="terrainNav" class="hidden" style="width:100%; height:100%; position:relative;"></div>
+</div>
+
+<script>
+
+/* ---------- GLOBE TOGGLE CONTROL ---------- */
+class GlobeControl {
+  onAdd(map) {
+    this._map = map;
+    this._isGlobe = false;
+    this._container = document.createElement('div');
+    this._container.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+    this._container.style.cssText = 'background:#fff;border:1px solid #ccc;border-radius:50%;width:32px;height:32px;box-shadow:0 2px 4px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer;';
+    this._container.title = 'Toggle Globe / Flat';
+    this._container.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
+    this._container.addEventListener('click', () => {
+      if (this._map.getTerrain()) {
+        const orig = this._container.title;
+        this._container.title = '⚠ Globe unavailable in 3D Terrain mode';
+        this._container.style.opacity = '0.4';
+        this._container.style.cursor = 'not-allowed';
+        setTimeout(() => {
+          this._container.title = orig;
+          this._container.style.opacity = '';
+          this._container.style.cursor = '';
+        }, 2000);
+        return;
+      }
+      this._isGlobe = !this._isGlobe;
+      this._map.setProjection({ type: this._isGlobe ? 'globe' : 'mercator' });
+      this._container.querySelector('svg').setAttribute('stroke', this._isGlobe ? '#1a73e8' : '#666');
+      this._container.title = this._isGlobe ? 'Switch to Flat view' : 'Switch to Globe view';
+    });
+    return this._container;
+  }
+  onRemove() { this._container.parentNode.removeChild(this._container); this._map = undefined; }
+}
+
+/* ---------- BASE MAPS ---------- */
+
+const MAPS = {
+  dark: 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+  countries: 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+  cyclo: 'https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
+  hot: 'https://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+  terrain: 'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
+  sat: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  radar: null
+};
+
+/* ---------- GLOBAL STATE ---------- */
+
+let quads = [];
+let activeQuad = 0;
+let syncing = false;
+let savedView = { center:[34,32], zoom:5 };
+let cmpMap = null;
+let cmpA = null;
+let cmpB = null;
+
+/* ---------- CREATE MAP ---------- */
+
+function createMap(container, initialType) {
+  // Identify the div element correctly
+  const containerId = typeof container === 'string' ? container : container.id;
+  const containerElement = document.getElementById(containerId);
+  const cid = containerId;
+
+  const m = new maplibregl.Map({
+    container: containerId,
+    style: {
+      version: 8,
+      sources: {
+        base: {
+          type: "raster",
+          tiles: [MAPS[initialType] || MAPS.dark],
+          tileSize: 256
+        }
+      },
+      layers: [{
+        id: "base",
+        type: "raster",
+        source: "base"
+      }]
+    },
+    center: savedView.center,
+    zoom: savedView.zoom,
+    pitch: 0,
+    bearing: 0
+  });
+
+  // Create a Container for multiple labels
+  const labelContainer = document.createElement('div');
+  labelContainer.className = 'map-layer-label-container';
+  labelContainer.id = `labels-${containerElement.id}`; // Changed to plural ID
+  containerElement.appendChild(labelContainer);
+
+  const nav = new maplibregl.NavigationControl({
+    showCompass: true,
+    showZoom: false,
+    visualizePitch: true
+  });
+  m.addControl(nav, 'top-right');
+
+  const scale = new maplibregl.ScaleControl({ maxWidth: 80, unit: 'metric' });
+  m.addControl(scale, 'bottom-left');
+
+  // Custom Search Control
+  const searchCtrl = {
+    _map: null, _debounce: null,
+    onAdd(map) {
+      this._map = map;
+      this._container = document.createElement('div');
+      this._container.className = 'maplibregl-ctrl custom-search-ctrl';
+
+      this._container.innerHTML = `
+        <div class="custom-search-box" id="csbox-${cid}">
+          <input class="custom-search-input" id="csinput-${cid}" placeholder="Search place..." autocomplete="off" />
+          <span class="custom-search-clear" id="csclear-${cid}">✕</span>
+        </div>
+        <div class="custom-search-btn" id="csbtn-${cid}" title="Search place">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="#555" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </div>
+        <div class="custom-search-results" id="csresults-${cid}"></div>
+      `;
+
+      const box     = this._container.querySelector(`#csbox-${cid}`);
+      const input   = this._container.querySelector(`#csinput-${cid}`);
+      const btn     = this._container.querySelector(`#csbtn-${cid}`);
+      const results = this._container.querySelector(`#csresults-${cid}`);
+      const clear   = this._container.querySelector(`#csclear-${cid}`);
+
+      const collapse = () => {
+        box.classList.remove('open');
+        results.classList.remove('visible');
+        input.value = '';
+        results.innerHTML = '';
+      };
+      const clearPolygon = () => {
+        ['search-fill','search-outline'].forEach(l => { if (map.getLayer(l)) map.removeLayer(l); });
+        if (map.getSource('search-area')) map.removeSource('search-area');
+      };
+
+      btn.addEventListener('click', () => {
+        if (box.classList.contains('open')) { collapse(); return; }
+        clearPolygon();
+        box.classList.add('open');
+        setTimeout(() => input.focus(), 210);
+      });
+
+      clear.addEventListener('click', () => { clearPolygon(); collapse(); });
+
+      input.addEventListener('input', () => {
+        clearTimeout(this._debounce);
+        const q = input.value.trim();
+        if (!q) { results.innerHTML = ''; results.classList.remove('visible'); return; }
+        this._debounce = setTimeout(async () => {
+          try {
+            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=geojson&polygon_geojson=1&addressdetails=1&limit=7`;
+            const res = await fetch(url);
+            const gj  = await res.json();
+            results.innerHTML = '';
+            if (!gj.features.length) {
+              results.innerHTML = '<div class="custom-search-result-item" style="color:#999">No results</div>';
+            } else {
+              gj.features.forEach(f => {
+                const item = document.createElement('div');
+                item.className = 'custom-search-result-item';
+                item.textContent = f.properties.display_name;
+                item.addEventListener('click', () => {
+                  const bbox   = f.bbox || [-180,-90,180,90];
+                  const geom   = f.geometry;
+                  const center = [bbox[0]+(bbox[2]-bbox[0])/2, bbox[1]+(bbox[3]-bbox[1])/2];
+
+                  // Fly to result
+                  if (bbox[2]-bbox[0] > 0.05 || bbox[3]-bbox[1] > 0.05) {
+                    map.fitBounds([[bbox[0],bbox[1]],[bbox[2],bbox[3]]], { padding: 40, maxZoom: 14, duration: 1200 });
+                  } else {
+                    map.flyTo({ center, zoom: 14, duration: 1200 });
+                  }
+
+                  // Draw polygon border if area
+                  ['search-fill','search-outline'].forEach(l => { if (map.getLayer(l)) map.removeLayer(l); });
+                  if (map.getSource('search-area')) map.removeSource('search-area');
+                  if (geom.type !== 'Point' && geom.type !== 'MultiPoint') {
+                    map.addSource('search-area', { type:'geojson', data:{type:'Feature',geometry:geom} });
+                    map.addLayer({ id:'search-fill',    type:'fill',   source:'search-area', paint:{'fill-color':'#4fc3f7','fill-opacity':0.12} });
+                    map.addLayer({ id:'search-outline', type:'line',   source:'search-area', paint:{'line-color':'#0288d1','line-width':2.2} });
+                  }
+                  collapse();
+                collapse();
+                });
+                results.appendChild(item);
+              });
+            }
+            results.classList.add('visible');
+          } catch(e) { console.error(e); }
+        }, 320);
+      });
+
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Escape') collapse();
+        if (e.key === 'Enter') {
+          const first = results.querySelector('.custom-search-result-item');
+          if (first) first.click();
+        }
+      });
+
+      document.addEventListener('click', e => {
+        if (!this._container.contains(e.target)) collapse();
+      });
+
+      return this._container;
+    },
+    onRemove() { this._container.parentNode && this._container.parentNode.removeChild(this._container); }
+  };
+  m.addControl(searchCtrl, 'top-right');
+
+  m.addControl(new GlobeControl(), 'top-right');
+
+  return m;
+}
+
+/* ---------- ELEVATION / VIEWSHED HELPERS ---------- */
+const _vsZoom = 11;
+const _vsCache = new Map();
+
+function _lngLatToTileXY(lng, lat, z) {
+  const n = Math.pow(2, z);
+  const x = Math.floor((lng + 180) / 360 * n);
+  const lr = lat * Math.PI / 180;
+  const y = Math.floor((1 - Math.log(Math.tan(lr) + 1 / Math.cos(lr)) / Math.PI) / 2 * n);
+  return { x, y };
+}
+
+function _fetchElevTile(z, x, y) {
+  const key = `${z}/${x}/${y}`;
+  if (_vsCache.has(key)) return Promise.resolve(_vsCache.get(key));
+  return new Promise(res => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const d = ctx.getImageData(0, 0, 256, 256).data;
+      const e = new Float32Array(256 * 256);
+      for (let i = 0; i < e.length; i++)
+        e[i] = (d[i*4] * 256 + d[i*4+1] + d[i*4+2] / 256) - 32768;
+      _vsCache.set(key, e);
+      res(e);
+    };
+    img.onerror = () => res(null);
+    img.src = `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`;
+  });
+}
+
+function _getElevAt(lng, lat) {
+  const { x, y } = _lngLatToTileXY(lng, lat, _vsZoom);
+  return _fetchElevTile(_vsZoom, x, y).then(data => {
+    if (!data) return 0;
+    const n = Math.pow(2, _vsZoom);
+    const px = Math.min(255, Math.max(0, Math.floor(((lng + 180) / 360 * n - x) * 256)));
+    const lr = lat * Math.PI / 180;
+    const py = Math.min(255, Math.max(0, Math.floor(((1 - Math.log(Math.tan(lr) + 1 / Math.cos(lr)) / Math.PI) / 2 * n - y) * 256)));
+    return data[py * 256 + px];
+  });
+}
+
+function _offsetLL(lng, lat, dxM, dyM) {
+  const R = 6371000;
+  return [
+    lng + (dxM / (R * Math.cos(lat * Math.PI / 180))) * (180 / Math.PI),
+    lat + (dyM / R) * (180 / Math.PI)
+  ];
+}
+
+async function _computeViewshed(lng, lat, radiusM, bearing, onProg) {
+  const OBS_H  = 1.70;
+  const RAYS   = 360;
+  const STEP   = Math.max(50, radiusM / 150);
+
+  // Prefetch tiles
+  const deg = radiusM / 111000;
+  const tMin = _lngLatToTileXY(lng - deg * 1.5, lat - deg * 1.5, _vsZoom);
+  const tMax = _lngLatToTileXY(lng + deg * 1.5, lat + deg * 1.5, _vsZoom);
+  const fetches = [];
+  for (let tx = tMin.x; tx <= tMax.x; tx++)
+    for (let ty = tMax.y; ty <= tMin.y; ty++)
+      fetches.push(_fetchElevTile(_vsZoom, tx, ty));
+  await Promise.all(fetches);
+
+  const obsElev = await _getElevAt(lng, lat);
+  const obsH = obsElev + OBS_H;
+
+  // Build look-direction FOV mask (360° but weighted toward bearing)
+  const verts = [[lng, lat]];
+
+  for (let i = 0; i < RAYS; i++) {
+    const angleRad = (i / RAYS) * 2 * Math.PI;
+    const dx = Math.sin(angleRad);
+    const dy = Math.cos(angleRad);
+
+    let maxSlope = -Infinity;
+    let visibleD = STEP;
+
+    for (let d = STEP; d <= radiusM; d += STEP) {
+      const [pLng, pLat] = _offsetLL(lng, lat, dx * d, dy * d);
+      const elev = await _getElevAt(pLng, pLat);
+      const slope = (elev - obsH) / d;
+      if (slope >= maxSlope) {
+        maxSlope = slope;
+        visibleD = d;
+      }
+    }
+
+    const [vLng, vLat] = _offsetLL(lng, lat, dx * visibleD, dy * visibleD);
+    verts.push([vLng, vLat]);
+    if (onProg) onProg(i / RAYS);
+  }
+
+  verts.push(verts[1]); // close polygon
+  return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [verts] } };
+}
+
+/* ---------- BUILD QUADS ---------- */
+const DEFAULT_TYPES = ['sat', 'terrain', 'hot', 'cyclo'];
+
+['q0', 'q1', 'q2', 'q3'].forEach((id, i) => {
+  let map = createMap(id, DEFAULT_TYPES[i]);
+
+  map.on('load', () => {
+    map.resize();
+  });
+
+  // Track which map is being interacted with
+  map.on('mouseenter', () => { activeQuad = i; });
+
+	map.on('mousemove', (e) => {
+    // Clear all markers on all quads first
+    quads.forEach(q => {
+      if (q._hoverMarker) { q._hoverMarker.remove(); delete q._hoverMarker; }
+    });
+    // Place marker on all OTHER quads
+    quads.forEach((other, j) => {
+      if (j === i) return;
+      const el = document.createElement('div');
+      el.style.cssText = 'pointer-events:none;width:32px;height:32px;';
+      el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="6" fill="none" stroke="#c62828" stroke-width="1.5"/>
+        <line x1="16" y1="2" x2="16" y2="10" stroke="#c62828" stroke-width="1.5"/>
+        <line x1="16" y1="22" x2="16" y2="30" stroke="#c62828" stroke-width="1.5"/>
+        <line x1="2" y1="16" x2="10" y2="16" stroke="#c62828" stroke-width="1.5"/>
+        <line x1="22" y1="16" x2="30" y2="16" stroke="#c62828" stroke-width="1.5"/>
+      </svg>`;
+      other._hoverMarker = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat(e.lngLat).addTo(other);
+    });
+  });
+
+  map.on('mouseleave', () => {
+    quads.forEach(q => {
+      if (q._hoverMarker) { q._hoverMarker.remove(); delete q._hoverMarker; }
+    });
+  });
+  
+  // Sync Movement across all quads
+  map.on('move', () => {
+    if (syncing) return;
+    syncing = true;
+    
+    const center = map.getCenter();
+    const zoom = map.getZoom();
+    savedView = { center: [center.lng, center.lat], zoom: zoom };
+
+    // Update coordinates in sidebar
+    updateSidebarCoords(map);
+
+    // Move all other quads to match
+    quads.forEach((otherMap, index) => {
+      if (index !== i) {
+        otherMap.jumpTo({
+          center: center,
+          zoom:   zoom
+        });
+      }
+    });
+    
+    // Also sync the crosshairs
+    syncCrosshair(center);
+    
+    syncing = false;
+  });
+
+  quads.push(map);
+});
+
+/* ---------- CROSSHAIR SYNC ---------- */
+
+function syncCrosshair(latlng) {
+  // Combine quads and comparison maps into one array to update all at once
+  const allMaps = [...quads];
+  if (cmpA) allMaps.push(cmpA, cmpB);
+
+  allMaps.forEach(map => {
+    if (!map) return;
+    let point = map.project(latlng);
+    let el = map.getContainer().querySelector('.crosshair');
+    if (!el) return;
+
+    el.style.transform = `translate(${point.x}px, ${point.y}px) translate(-50%, -50%)`;
+  });
+}
+
+/* ---------- BASE SWITCH ---------- */
+
+function allowDrop(ev) {
+  ev.preventDefault();
+}
+
+function drag(ev) {
+  // Store the map type (e.g., 'sat') when the user starts dragging the button
+  ev.dataTransfer.setData("mapType", ev.target.getAttribute('data-type'));
+}
+
+/* ---------- DRAG & DROP LOGIC ---------- */
+function drop(ev, targetId) {
+  ev.preventDefault();
+  const type = ev.dataTransfer.getData("mapType");
+
+  if (type === 'quakes')			 { toggleQuakes(targetId);
+  } else if (type === 'buildings')   { toggleBuildings(targetId);
+  } else if (type === 'nuclear') 	 { toggleNuclear(targetId);
+  } else if (type === 'borders')     { toggleBorders(targetId);
+  } else if (type === 'citylights')  { toggleCityLights(targetId);
+  } else if (type === 'power')       { togglePower(targetId);
+  } else if (type === 'airports')    { toggleIranAirports(targetId);
+  } else if (type === 'airbases')    { toggleIranAirbases(targetId);
+  } else if (type === 'graticule')   { toggleGraticule(targetId);
+  } else if (type === 'viewshed')    { toggleViewshed(targetId);
+  } else if (type === 'population')  { togglePopulation(targetId);
+  } else if (type === 'weathercloud'){ toggleWeatherCloud(targetId);
+  } else if (type === 'thermal')     { toggleThermal(targetId);
+  } else if (type === 'terrain3d')   { setBase3DTerrain(targetId);
+  } else if (type === 'overlays')    { toggleTerrainOverlays(targetId);
+  } else if (type === 'iranoverlays'){ toggleIranOverlays(targetId);
+  } else 						 	 { setBase(targetId, type); }
+}
+
+function toggleBuildings(target) {
+  let map = (target === 'cmpA') ? cmpA : (target === 'cmpB') ? cmpB : quads[target];
+  if (!map) return;
+
+  // Toggle Off if layer already exists
+  if (map.getSource('buildings')) {
+    map.removeLayer('buildings');
+    map.removeSource('buildings');
+	const buildingsTag = document.getElementById(`tag-buildings-${map.getContainer().id}`);
+    if (buildingsTag) buildingsTag.remove();
+    return;
+  }
+
+  // Add 3D Building Vector Tiles
+  map.addSource('buildings', {
+    type: 'vector',
+    url: 'https://tiles.openfreemap.org/planet'
+  });
+
+  map.addLayer({
+    'id': 'buildings',
+    'source': 'buildings',
+    'source-layer': 'building',
+    'type': 'fill-extrusion',
+    'minzoom': 15, // Optimization: only show when zoomed in
+    'paint': {
+      'fill-extrusion-color': '#aaa',
+      'fill-extrusion-height': ['get', 'render_height'],
+      'fill-extrusion-base': ['get', 'render_min_height'],
+      'fill-extrusion-opacity': 0.6
+    }
+  });
+  	
+	// --- SECTION: TOGGLE ON ---
+	// ADD THESE LINES AT THE VERY END OF THE FUNCTION:
+	const containerId = map.getContainer().id;
+    const labelsContainer = document.getElementById(`labels-${containerId}`);
+
+}
+
+async function toggleNuclear(target) {
+  let map = (target === 'cmpA') ? cmpA : (target === 'cmpB') ? cmpB : quads[target];
+  if (!map) return;
+
+  // 1. Toggle Off Logic
+  if (map.getSource('nuclear-iran')) {
+    if (map.getLayer('nuclear-icon-layer')) map.removeLayer('nuclear-icon-layer');
+    map.removeSource('nuclear-iran');
+	const nuclearTag = document.getElementById(`tag-nuclear-${map.getContainer().id}`);
+    if (nuclearTag) nuclearTag.remove();
+    return;
+  }
+
+  // 2. Comprehensive Dataset
+  const nuclearData = {
+    "type": "FeatureCollection",
+    "features": [
+      { "type": "Feature", "properties": { "name": "Abadeh (Marivan)", "type": "High Explosive Test Site", "location": "Remote Surface", "history": "Identified in the 'Nuclear Archive'.<br>Site used for testing conventional components of nuclear weapons.", "operational": "Active ~1990s–2003,<br>mothballed after AMAD halt", "operator": "IRGC / MODAFL — no AEOI civilian role", "mechanism": "Open-air range for testing conventional explosive triggers of nuclear implosion devices", "commercial": "No — covert military R&D only" }, "geometry": { "type": "Point", "coordinates": [52.7000, 31.2500] } },
+      { "type": "Feature", "properties": { "name": "Anarak", "type": "Nuclear Waste Site", "location": "Underground Storage", "history": "Used for the storage of radioactive waste and contaminated equipment.", "operational": "In use since mid-1990s, ongoing", "operator": "AEOI", "mechanism": "Underground storage of sealed radioactive waste drums — no active nuclear reaction", "commercial": "No — waste disposal only" }, "geometry": { "type": "Point", "coordinates": [53.8500, 33.3500] } },
+      { "type": "Feature", "properties": { "name": "Arak (IR-40)", "type": "Heavy Water Reactor", "location": "Surface Level", "history": "2016: Core filled with cement.<br>2025/26: Repeated strikes damaging reactor containment.", "operational": "Construction 2004, ready ~2013,<br>core cemented Jan 2016", "operator": "AEOI — Chinese technical assistance post-JCPOA", "mechanism": "Heavy-water reactor using natural uranium;<br>produces plutonium as byproduct", "commercial": "Officially research/isotopes;<br>40MWt output yields enough Pu for ~2 weapons/year" }, "geometry": { "type": "Point", "coordinates": [49.2405, 34.3700] } },
+      { "type": "Feature", "properties": { "name": "Ardakan", "type": "Yellowcake Plant", "location": "Surface", "history": "Processes ore into yellowcake (U3O8).", "operational": "Operational since ~2006,<br>expanded 2021–2023", "operator": "AEOI", "mechanism": "Ore leached with sulfuric acid, dried into yellowcake (U3O8) for fuel cycle feed", "commercial": "Civilian fuel cycle — feeds Isfahan UCF;<br>output exceeds domestic reactor needs" }, "geometry": { "type": "Point", "coordinates": [54.0000, 32.3160] } },
+      { "type": "Feature", "properties": { "name": "Bonab Atomic Energy Research Center", "type": "Nuclear Research & Irradiation", "location": "Surface Level", "history": "Focuses on agricultural and medical nuclear applications.<br>Historically suspected of supporting enrichment research.", "operational": "Established 1991", "operator": "AEOI", "mechanism": "Small research reactor and gamma chambers for agricultural and medical irradiation", "commercial": "Yes — civilian agricultural and medical research,<br>IAEA-monitored" }, "geometry": { "type": "Point", "coordinates": [46.0125, 37.4225] } },
+      { "type": "Feature", "properties": { "name": "Bushehr (BNPP)", "type": "Nuclear Power Plant", "location": "Coastal Surface", "history": "1980s: Hit by Iraqi air strikes.<br>2025: Defensive batteries engaged incoming drones.", "operational": "Unit 1 online Aug 2011;<br>Unit 2 under construction", "operator": "AEOI operates; built and supported by Rosatom (Russia)", "mechanism": "Russian VVER-1000 PWR;<br>enriched uranium fuel heated under pressure drives a 1,000 MWe turbine", "commercial": "Yes — commercial electricity, ~2% of Iran's grid; spent fuel returned to Russia" }, "geometry": { "type": "Point", "coordinates": [50.8840, 28.8292] } },
+      { "type": "Feature", "properties": { "name": "Darkhovin (Karoon)", "type": "Planned Power Plant", "location": "Construction Site", "history": "Planned indigenous 300MW reactor.<br>Construction officially started in late 2022.", "operational": "Construction restarted 2022, not yet operational", "operator": "AEOI — indigenous design, no confirmed foreign partner", "mechanism": "Planned 300 MWe indigenous PWR;<br>full design specs not publicly released", "commercial": "Yes — planned electricity generation for Khuzestan province" }, "geometry": { "type": "Point", "coordinates": [48.3800, 30.7078] } },
+      { "type": "Feature", "properties": { "name": "Fordow (FFEP)", "type": "Uranium Enrichment", "location": "Mountain Base (80m rock cover)", "history": "Built inside IRGC base.<br>2025: Heavily targeted; multiple strikes to tunnel entrances.", "operational": "Built secretly ~2007–2009,<br>disclosed 2009,<br>enrichment began ~2011", "operator": "AEOI — constructed by and co-located with IRGC Aerospace Force base", "mechanism": "Underground centrifuge cascades enriching UF6; reached 60% U-235 by 2022", "commercial": "No — 60% enrichment has no civilian justification; hardened design signals military intent" }, "geometry": { "type": "Point", "coordinates": [50.9950, 34.8845] } },
+      { "type": "Feature", "properties": { "name": "Gachin", "type": "Uranium Mine", "location": "Remote Surface", "history": "Known source of ore near Bandar Abbas. Subject to IAEA inspections.", "operational": "Active since early 2000s, IAEA-safeguarded", "operator": "AEOI", "mechanism": "Open-pit uranium ore mine; ore trucked to Ardakan for yellowcake processing", "commercial": "Civilian fuel cycle — supplies domestic uranium feedstock" }, "geometry": { "type": "Point", "coordinates": [55.9800, 27.2800] } },
+      { "type": "Feature", "properties": { "name": "Isfahan (ENTC)", "type": "Nuclear Tech Center", "location": "Complex (Surface/Under)", "history": "Largest hub. 2025: Massive damage to fuel fabrication and conversion buildings.", "operational": "Established 1984;<br>UCF operational 2004–2005", "operator": "AEOI — Chinese technical assistance in 1980s–90s", "mechanism": "Converts yellowcake to UF6 gas; also fabricates fuel assemblies and produces zirconium cladding", "commercial": "Mixed — civilian fuel steps, but UF6 stockpile far exceeds Bushehr's needs" }, "geometry": { "type": "Point", "coordinates": [51.8691, 32.7676] } },
+      { "type": "Feature", "properties": { "name": "Karaj (Nuclear Medicine Center)", "type": "Centrifuge Component Production", "location": "Surface Industrial", "history": "2021: Targeted by a quadcopter drone strike that damaged the TESA centrifuge parts facility.", "operational": "Active since ~2000s;<br>struck by drone 2021", "operator": "AEOI / TESA (Kalaye Electric Company, absorbed into AEOI)", "mechanism": "Precision manufacturing of IR-series centrifuge components (rotors, bearings, end-caps)", "commercial": "No — output feeds exclusively into the enrichment program" }, "geometry": { "type": "Point", "coordinates": [50.9000, 35.8300] } },
+      { "type": "Feature", "properties": { "name": "Khodabandelu", "type": "Suspected Underground Facility", "location": "Tunnel Complex", "history": "Recent satellite imagery (2023-2025) shows extensive tunnel excavation near the Parchin complex.", "operational": "Under active construction 2023–2025, not yet confirmed operational", "operator": "IRGC suspected — proximity to Parchin military zone", "mechanism": "Deep tunnel complex (~80–100m overburden); assessed as hardened centrifuge hall or weapons storage", "commercial": "No — assessed military; Iran has not acknowledged its existence" }, "geometry": { "type": "Point", "coordinates": [51.7900, 35.5500] } },
+      { "type": "Feature", "properties": { "name": "Khondab (Arak IR-40)", "type": "Heavy Water Research Reactor", "location": "Surface Level", "history": "Core filled with concrete in 2016.<br>Struck in June 2025 and again in March 2026 to prevent restoration.", "operational": "Heavy water plant ~2006;<br>IR-40 ready ~2013;<br>decommissioned 2016", "operator": "AEOI", "mechanism": "Produces heavy water (D2O) via Girdler sulfide isotope exchange process", "commercial": "No — excess D2O production beyond reactor needs is a proliferation indicator" }, "geometry": { "type": "Point", "coordinates": [49.2405, 34.3700] } },
+      { "type": "Feature", "properties": { "name": "Lashkar Abad", "type": "Laser Enrichment Site", "location": "Surface (Warehouses)", "history": "Secret laser enrichment site discovered in 2003.<br>Iran later claimed it was for medical research.", "operational": "Active late 1990s to ~2003 when exposed; current status unknown", "operator": "AEOI / PHRC — linked to Mohsen Fakhrizadeh's covert network", "mechanism": "AVLIS laser enrichment — tuned laser selectively ionizes U-235 atoms for collection", "commercial": "No — weapons-scale AVLIS has no civilian application" }, "geometry": { "type": "Point", "coordinates": [50.8500, 35.8500] } },
+      { "type": "Feature", "properties": { "name": "Natanz (FEP/PFEP)", "type": "Uranium Enrichment", "location": "Hardened Underground (Deep)", "history": "2010: Stuxnet cyber attack.<br>2021: Power grid sabotage.<br>2025: Struck by US MOP bunker-busters.", "operational": "PFEP from 2003;<br>FEP commercial scale from 2007", "operator": "AEOI", "mechanism": "19,000+ centrifuges in underground cascades;<br>enriched to 60% U-235 by 2022", "commercial": "No — enrichment beyond 5% has no power reactor justification" }, "geometry": { "type": "Point", "coordinates": [51.7278, 33.7223] } },
+      { "type": "Feature", "properties": { "name": "Parchin Military Complex", "type": "Military / Nuclear Research Site", "location": "Bunkered & Underground Tunnels", "history": "Suspected site of hydrodynamic triggers for nuclear weapons.<br>Significantly damaged in June 2025 strikes.", "operational": "Military base since 1930s; nuclear activities suspected from 1990s–2003", "operator": "MODAFL / IRGC — entirely military,<br>no AEOI civilian presence", "mechanism": "Large steel containment vessel used for hydrodynamic implosion symmetry tests", "commercial": "No — purely military; site sanitized before partial IAEA inspection in 2015" }, "geometry": { "type": "Point", "coordinates": [51.7778, 35.5272] } },
+      { "type": "Feature", "properties": { "name": "Saghand", "type": "Uranium Mine", "location": "Open Pit / Shaft", "history": "Active mine providing raw uranium ore for processing at Ardakan.", "operational": "Active since ~2004–2005, IAEA-safeguarded", "operator": "AEOI", "mechanism": "Combined open-pit and shaft mine extracting uranium ore from granite host rock", "commercial": "Civilian fuel cycle — estimated 3,000–5,000 tonnes U reserves" }, "geometry": { "type": "Point", "coordinates": [55.5000, 32.5160] } },
+      { "type": "Feature", "properties": { "name": "Tehran (TRR)", "type": "Research Reactor", "location": "Urban Surface", "history": "Operating since 1967. Used for medical isotopes and research.", "operational": "Operational since 1967 (US Atoms for Peace); continuously operated since", "operator": "AEOI — originally US-supplied;<br>fuel now sourced domestically", "mechanism": "5 MWt pool-type light water reactor; fuel submerged in open water pool for cooling and shielding", "commercial": "Yes — primary producer of medical radioisotopes (Mo-99, I-131) for Iran's healthcare system" }, "geometry": { "type": "Point", "coordinates": [51.3880, 35.7380] } },
+      { "type": "Feature", "properties": { "name": "Turquz Abad", "type": "Atomic Warehouse", "location": "Urban (Tehran Suburb)", "history": "Identified in 2018 as a secret storage site for nuclear equipment and records.<br>IAEA later found uranium particles here.", "operational": "Active ~mid-2000s to 2018 when exposed;<br>subsequently sanitized", "operator": "AEOI / SPND — linked to covert weapons program", "mechanism": "Commercial warehouse used to store AMAD weapons program equipment and documents", "commercial": "No — uranium metal particles found by IAEA inconsistent with any civilian use" }, "geometry": { "type": "Point", "coordinates": [51.3400, 35.5100] } }
+    ]
+  };
+
+  // 3. Extended detail lookup (start date, tech, IAEA status)
+  const nuclearDataDetails = {
+    "Natanz (FEP/PFEP)":                  { start: "2003 (Pilot), 2007 (Main)",          tech: "Gas Centrifuge Cascade (Enrichment)",          iaea: "High (Underground Monitoring)" },
+    "Bonab Atomic Energy Research Center": { start: "1995",                                tech: "Research Reactor & Irradiation",               iaea: "Regular Inspections" },
+    "Parchin Military Complex":            { start: "2000 (Nuclear-related activities)",   tech: "Hydrodynamic High-Explosive Testing",          iaea: "Restricted Access / High Controversy" },
+    "Khondab (Arak IR-40)":               { start: "2004 (Construction)",                 tech: "Heavy Water Moderated Reactor",                iaea: "Continuous Monitoring" },
+    "Lashkar Abad":                        { start: "2002 (Pilot)",                        tech: "Laser Isotope Separation (AVLIS)",             iaea: "Historical Inspections" },
+    "Abadeh (Marivan)":                    { start: "2003 (Implosion Tests)",              tech: "High Explosive Test Range",                    iaea: "Restricted / Site Verification Focus" },
+    "Turquz Abad":                         { start: "Pre-2018 (Storage activities)",       tech: "Atomic Warehouse / Storage",                  iaea: "Environmental Sampling (Controversial)" },
+    "Karaj (Nuclear Medicine Center)":     { start: "2006 (Component Production)",        tech: "Centrifuge Component Manufacturing",           iaea: "Oversight challenged (Camera disputes)" },
+    "Khodabandelu":                        { start: "2023 (Tunnel Excavation)",            tech: "Suspected Underground Production/Storage",    iaea: "No Current Access" },
+    "Darkhovin (Karoon)":                  { start: "2022 (Construction Start)",           tech: "300MW Pressurized Water Reactor",             iaea: "Planned Safeguards" },
+    "Fordow (FFEP)":                       { start: "2006 (Built), 2011 (Operational)",   tech: "Gas Centrifuge (High Enrichment)",             iaea: "Critical / Frequent Inspections" },
+    "Arak (IR-40)":                        { start: "2004 (Construction)",                tech: "Heavy Water Reactor",                         iaea: "Under Observation" },
+    "Bushehr (BNPP)":                      { start: "2011 (Connected), 2013 (Commercial)", tech: "VVER-1000 Light Water Reactor",               iaea: "Operational Safety Monitoring" },
+    "Isfahan (ENTC)":                      { start: "1984",                               tech: "Uranium Conversion (UCF) / Fuel Fabrication",  iaea: "Very High Oversight" },
+    "Tehran (TRR)":                        { start: "1967",                               tech: "5MW Research Reactor (US-supplied)",           iaea: "Regular Safeguards" },
+    "Saghand":                             { start: "2005 (Mining), 2013 (Full)",         tech: "Uranium Mine (Extraction)",                   iaea: "Limited Inspections" },
+    "Ardakan":                             { start: "2013",                               tech: "Yellowcake Production Mill",                  iaea: "Regular Safeguards" },
+    "Gachin":                              { start: "2004",                               tech: "Uranium Mine (Leaching)",                     iaea: "Historical Access" },
+    "Anarak":                              { start: "Pre-2000",                           tech: "Radioactive Waste Management",                iaea: "Safety Oversight" }
+  };
+
+  // 3. Helper to load image correctly using a Promise
+  const loadImagePromise = (url) => new Promise((resolve, reject) => {
+    map.loadImage(url, (error, image) => {
+      if (error) reject(error);
+      else resolve(image);
+    });
+  });
+
+  // 4. Add Image and Layers
+  // 3. Helper to create a Nuclear Icon using Canvas (Fixed for MapLibre)
+  const createNukeBitmap = () => {
+    const size = 64;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // Draw Yellow Circle Background
+    ctx.beginPath();
+    ctx.arc(size/2, size/2, size/2 - 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'yellow';
+    ctx.fill();
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw Black Radiation Symbol
+    ctx.fillStyle = 'black';
+    const center = size / 2;
+    
+    // Center circle
+    ctx.beginPath();
+    ctx.arc(center, center, size * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Three "blades"
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(center, center);
+      ctx.arc(center, center, size * 0.35, (i * 120 - 30) * Math.PI / 180, (i * 120 + 30) * Math.PI / 180);
+      ctx.lineTo(center, center);
+      ctx.fill();
+    }
+    return ctx.getImageData(0, 0, size, size);
+  };
+
+  // 4. Add Image and Layers
+  try {
+    const iconId = 'nuke-emoji-icon';
+  
+  if (!map.hasImage(iconId)) {
+    const size = 64;
+    const canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // Draw Emoji to Canvas
+    ctx.font = '48px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('☢️', 32, 35); // You can change '☢️' to '🏭', '☣️', or '💣' here
+
+    map.addImage(iconId, ctx.getImageData(0, 0, size, size));
+  }
+
+    if (!map.getSource('nuclear-iran')) {
+      map.addSource('nuclear-iran', { type: 'geojson', data: nuclearData });
+    }
+
+    map.addLayer({
+		id: 'nuclear-icon-layer',
+		type: 'symbol',
+		source: 'nuclear-iran',
+		layout: {
+		  'icon-image': iconId,
+		  'icon-size': 0.6,
+		  'icon-allow-overlap': true
+		}
+	  });
+
+	// --- SECTION: TOGGLE ON ---
+	// ADD THESE LINES AT THE VERY END OF THE FUNCTION:
+	const containerId = map.getContainer().id;
+    const labelsContainer = document.getElementById(`labels-${containerId}`);
+	  
+    // 5. Hover Logic (Remains the same as previous)
+    const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, className: 'nuke-popup' });
+
+    map.on('mouseenter', 'nuclear-icon-layer', (e) => {
+      map.getCanvas().style.cursor = 'pointer';
+      const f = e.features[0].properties;
+      const d = nuclearDataDetails[f.name] || {};
+	  const html = `
+        <div style="font-family:sans-serif; padding:5px; color:#000; max-width:300px;">
+          <h4 style="margin:0 0 6px 0; color:#d00;">${f.name}</h4>
+          <div style="font-size:12px; margin-bottom:6px;">
+            <b>Role:</b> ${f.type}<br>
+            <b>Placement:</b> ${f.location}
+          </div>
+          <div style="font-size:11px; border-top:1px solid #ddd; padding-top:5px; margin-bottom:5px;">
+            <b>Intel/History:</b><br>${f.history}
+          </div>
+          <div style="font-size:11px; border-top:1px solid #ddd; padding-top:5px; margin-bottom:5px;">
+            <b>Operational Since:</b> ${d.start || f.operational || '—'}
+          </div>
+          <div style="font-size:11px; margin-bottom:5px;">
+            <b>Operator:</b> ${f.operator || '—'}
+          </div>
+          <div style="font-size:11px; margin-bottom:5px;">
+            <b>Technology:</b> ${d.tech || f.mechanism || '—'}
+          </div>
+          <div style="font-size:11px; margin-bottom:5px;">
+            <b>How It Works:</b> ${f.mechanism || '—'}
+          </div>
+          <div style="font-size:11px; margin-bottom:5px;">
+            <b>Commercial Use:</b> ${f.commercial || '—'}
+          </div>
+          <div style="font-size:11px; border-top:1px solid #ddd; padding-top:5px;">
+            <b>IAEA Status:</b> <span style="color:#b00;">${d.iaea || '—'}</span>
+          </div>
+        </div>`;
+      popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+    });
+
+    map.on('mouseleave', 'nuclear-icon-layer', () => {
+      map.getCanvas().style.cursor = '';
+      popup.remove();
+    });
+
+  } catch (err) {
+    console.error("Nuclear Layer Error:", err);
+  }
+}
+
+function setBase(target, type) {
+  let map;
+  
+  // Directly target the specific map object based on the drop location
+  if (target === 'cmpA') map = cmpA;
+  else if (target === 'cmpB') map = cmpB;
+  else map = quads[target];
+
+  if (!map || !type) return;
+
+  const url = MAPS[type];
+
+  if (map.getSource('base')) {
+    map.removeLayer('base');
+    map.removeSource('base');
+    const labelHide = document.getElementById(`label-${map.getContainer().id}`);
+    if (labelHide) labelHide.style.display = 'none';
+  }
+  // Remove terrain if switching away from 3D terrain
+  if (map.getTerrain()) map.setTerrain(null);
+  if (map.getLayer('sky')) map.removeLayer('sky');
+  if (map.getSource('dem')) map.removeSource('dem');
+  
+  // Clean up 3D overlay panel and its layers/source
+  const terrCtrl = document.getElementById(`terrain-ctrl-${map.getContainer().id}`);
+  if (terrCtrl) terrCtrl.remove();
+  ['t3d-cities','t3d-roads','t3d-trails'].forEach(l => { if (map.getLayer(l)) map.removeLayer(l); });
+  if (map.getSource('t3d-cities-src')) map.removeSource('t3d-cities-src');
+  if (map.getSource('terrain-ovf')) map.removeSource('terrain-ovf');
+  if (map._cityMarkers) { map._cityMarkers.forEach(m => m.remove()); map._cityMarkers = null; }
+  const ovTag = document.getElementById(`tag-overlays-${map.getContainer().id}`);
+  if (ovTag) ovTag.remove();
+
+  map.easeTo({ pitch: 0, duration: 600 });
+
+  map.addSource('base', {
+    type: 'raster',
+    tiles: [url],
+    tileSize: 256
+  });
+
+  map.addLayer({
+    id: 'base',
+    type: 'raster',
+    source: 'base'
+  });
+}
+
+/* ---------- 3D TERRAIN BASEMAP ---------- */
+function setBase3DTerrain(target) {
+  let map;
+  if (target === 'cmpA') map = cmpA;
+  else if (target === 'cmpB') map = cmpB;
+  else map = quads[target];
+  if (!map) return;
+
+  // Set satellite as base raster
+  if (map.getSource('base')) {
+    map.removeLayer('base');
+    map.removeSource('base');
+  }
+  map.addSource('base', {
+    type: 'raster',
+    tiles: [MAPS.sat],
+    tileSize: 256
+  });
+  map.addLayer({ id: 'base', type: 'raster', source: 'base' });
+
+  // Add DEM source
+  if (!map.getSource('dem')) {
+    map.addSource('dem', {
+      type: 'raster-dem',
+      tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      encoding: 'terrarium'
+    });
+  }
+
+  
+
+  map.setTerrain({ source: 'dem', exaggeration: 1.5 });
+  map.easeTo({ pitch: 60, duration: 1000 });
+
+  
+}
+
+
+/* ---------- IRAN OVERLAYS (Nuclear / Airports / Airbases) ---------- */
+function toggleIranOverlays(target) {
+  let map = (target === 'cmpA') ? cmpA : (target === 'cmpB') ? cmpB : quads[target];
+  if (!map) return;
+  const cid = map.getContainer().id;
+
+  // Toggle OFF
+  if (document.getElementById(`iran-ctrl-${cid}`)) {
+    document.getElementById(`iran-ctrl-${cid}`).remove();
+    const t = document.getElementById(`tag-iranoverlays-${cid}`); if (t) t.remove();
+    const stack = document.getElementById(`panel-stack-${cid}`);
+    if (stack && stack.children.length === 0) stack.remove();
+    return;
+  }
+
+  // Build panel
+  const ctrl = document.createElement('div');
+  ctrl.id = `iran-ctrl-${cid}`;
+  ctrl.style.cssText = `
+    background:rgba(0,0,0,0.82);color:#fff;padding:10px 12px;
+    border-radius:8px;font-family:monospace;font-size:11px;
+    border:1px solid #555;min-width:175px;pointer-events:all;
+  `;
+  let panelStack = document.getElementById(`panel-stack-${cid}`);
+  if (!panelStack) {
+    panelStack = document.createElement('div');
+    panelStack.id = `panel-stack-${cid}`;
+    panelStack.style.cssText = 'position:absolute;top:10px;left:10px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none;';
+    map.getContainer().appendChild(panelStack);
+  }
+  panelStack.appendChild(ctrl);
+  ctrl.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:8px;background:rgba(255,100,100,0.15);border-radius:4px;padding:4px 6px;border:1px solid rgba(255,100,100,0.3);" id="iran-header-${cid}">
+      <div style="font-weight:bold;color:#ef9a9a;letter-spacing:1px;">🇮🇷 IRAN OVERLAYS</div>
+      <div id="iran-arrow-${cid}" style="color:#ef9a9a;font-size:10px;margin-left:8px;">▲</div>
+    </div>
+    <div id="iran-body-${cid}">
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:7px;cursor:pointer;">
+        <input type="checkbox" id="iran-nuclear-${cid}" style="accent-color:#ffeb3b;">
+        <span>Nuclear Sites</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:7px;cursor:pointer;">
+        <input type="checkbox" id="iran-airports-${cid}" style="accent-color:#81d4fa;">
+        <span>Airports</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="iran-airbases-${cid}" style="accent-color:#ef9a9a;">
+        <span>Airbases</span>
+      </label>
+    </div>
+  `;
+
+  // Collapse / expand
+  ctrl.querySelector(`#iran-header-${cid}`).addEventListener('click', () => {
+    const body  = ctrl.querySelector(`#iran-body-${cid}`);
+    const arrow = ctrl.querySelector(`#iran-arrow-${cid}`);
+    const open  = body.style.display !== 'none';
+    body.style.display = open ? 'none' : '';
+    arrow.textContent  = open ? '▼' : '▲';
+  });
+
+  // Nuclear Sites
+  ctrl.querySelector(`#iran-nuclear-${cid}`).addEventListener('change', function() {
+    toggleNuclear(target);
+  });
+
+  // Airports
+  ctrl.querySelector(`#iran-airports-${cid}`).addEventListener('change', function() {
+    toggleIranAirports(target);
+  });
+
+  // Airbases
+  ctrl.querySelector(`#iran-airbases-${cid}`).addEventListener('change', function() {
+    toggleIranAirbases(target);
+  });
+}
+
+
+/* ---------- MAP OVERLAYS (City Names / Roads / Trails) ---------- */
+function toggleTerrainOverlays(target) {
+  let map = (target === 'cmpA') ? cmpA : (target === 'cmpB') ? cmpB : quads[target];
+  if (!map) return;
+  const cid = map.getContainer().id;
+
+  // Toggle OFF
+  if (document.getElementById(`terrain-ctrl-${cid}`)) {
+    document.getElementById(`terrain-ctrl-${cid}`).remove();
+    ['t3d-cities','t3d-roads','t3d-trails'].forEach(l => { if (map.getLayer(l)) map.removeLayer(l); });
+    if (map.getSource('t3d-cities-src')) map.removeSource('t3d-cities-src');
+    if (map.getSource('terrain-ovf'))    map.removeSource('terrain-ovf');
+    if (map._cityMarkers) { map._cityMarkers.forEach(m => m.remove()); map._cityMarkers = null; }
+    const t = document.getElementById(`tag-overlays-${cid}`); if (t) t.remove();
+    const stack = document.getElementById(`panel-stack-${cid}`);
+    if (stack && stack.children.length === 0) stack.remove();
+    return;
+  }
+
+  // Build panel
+  const ctrl = document.createElement('div');
+  ctrl.id = `terrain-ctrl-${cid}`;
+  ctrl.style.cssText = `
+    background:rgba(0,0,0,0.82);color:#fff;padding:10px 12px;
+    border-radius:8px;font-family:monospace;font-size:11px;
+    border:1px solid #555;min-width:175px;pointer-events:all;
+  `;
+  let panelStack = document.getElementById(`panel-stack-${cid}`);
+  if (!panelStack) {
+    panelStack = document.createElement('div');
+    panelStack.id = `panel-stack-${cid}`;
+    panelStack.style.cssText = 'position:absolute;top:10px;left:10px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none;';
+    map.getContainer().appendChild(panelStack);
+  }
+  panelStack.appendChild(ctrl);
+  ctrl.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;margin-bottom:8px;background:rgba(100,181,246,0.15);border-radius:4px;padding:4px 6px;border:1px solid rgba(100,181,246,0.3);" id="tc-header-${cid}">
+      <div style="font-weight:bold;color:#64b5f6;letter-spacing:1px;">🗺 MAP OVERLAYS</div>
+      <div id="tc-arrow-${cid}" style="color:#64b5f6;font-size:10px;margin-left:8px;">▲</div>
+    </div>
+    <div id="tc-body-${cid}">
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:7px;cursor:pointer;">
+        <input type="checkbox" id="tc-cities-${cid}" style="accent-color:#64b5f6;">
+        <span>City Names</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:7px;cursor:pointer;">
+        <input type="checkbox" id="tc-roads-${cid}" style="accent-color:#ffb74d;">
+        <span>Roads</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:7px;cursor:pointer;">
+        <input type="checkbox" id="tc-trails-${cid}" style="accent-color:#00e5ff;">
+        <span>Trails &amp; Paths</span>
+      </label>
+      <div style="border-top:1px solid #444;margin:7px 0;"></div>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:7px;cursor:pointer;">
+        <input type="checkbox" id="tc-buildings-${cid}" style="accent-color:#aaa;">
+        <span>3D Buildings</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:7px;cursor:pointer;">
+        <input type="checkbox" id="tc-borders-${cid}" style="accent-color:#fff;">
+        <span>Country Borders</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="tc-graticule-${cid}" style="accent-color:#888;">
+        <span>Lat/Lon Lines</span>
+      </label>
+    </div>
+  `;
+
+  // Collapse / expand
+  ctrl.querySelector(`#tc-header-${cid}`).addEventListener('click', () => {
+    const body  = ctrl.querySelector(`#tc-body-${cid}`);
+    const arrow = ctrl.querySelector(`#tc-arrow-${cid}`);
+    const open  = body.style.display !== 'none';
+    body.style.display = open ? 'none' : '';
+    arrow.textContent  = open ? '▼' : '▲';
+  });
+
+  // Shared vector source
+  function ensureOvfSource() {
+    if (!map.getSource('terrain-ovf')) {
+      map.addSource('terrain-ovf', {
+        type: 'vector',
+        url: 'https://tiles.openfreemap.org/planet',
+        attribution: ''
+      });
+    }
+  }
+
+  // City names
+  ctrl.querySelector(`#tc-cities-${cid}`).addEventListener('change', async function() {
+    if (this.checked) {
+      if (!map._cityMarkers) {
+        map._cityMarkers = [];
+        try {
+          const res  = await fetch('https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_populated_places_simple.geojson');
+          const data = await res.json();
+          data.features.forEach(f => {
+            const [lng, lat] = f.geometry.coordinates;
+            const pop = f.properties.pop_max || 0;
+            const el  = document.createElement('div');
+            el.style.cssText = `
+              color:#000;font-family:Arial,sans-serif;
+              font-size:${pop > 5000000 ? 14 : pop > 1000000 ? 12 : 10}px;
+              font-weight:${pop > 1000000 ? 'bold' : 'normal'};
+              text-shadow:0 0 4px #fff,0 0 4px #fff,0 0 4px #fff,1px 1px 2px #fff;
+              pointer-events:none;white-space:nowrap;user-select:none;
+            `;
+            el.textContent = f.properties.name;
+            map._cityMarkers.push(
+              new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([lng, lat]).addTo(map)
+            );
+          });
+        } catch(e) { console.error('City labels error:', e); }
+      } else {
+        map._cityMarkers.forEach(m => m.addTo(map));
+      }
+    } else {
+      if (map._cityMarkers) map._cityMarkers.forEach(m => m.remove());
+    }
+  });
+
+  // Roads
+  ctrl.querySelector(`#tc-roads-${cid}`).addEventListener('change', function() {
+    ensureOvfSource();
+    if (this.checked) {
+      if (!map.getLayer('t3d-roads')) {
+        map.addLayer({
+          id: 't3d-roads', type: 'line', source: 'terrain-ovf', 'source-layer': 'transportation',
+          filter: ['match', ['get', 'class'], ['motorway','primary','secondary','tertiary','minor','residential'], true, false],
+          paint: {
+            'line-color': ['interpolate', ['linear'], ['zoom'], 5, '#ffb74d', 10, '#fff176'],
+            'line-width': ['interpolate', ['linear'], ['zoom'], 5, 0.8, 10, 2, 14, 4],
+            'line-opacity': 0.75
+          }
+        });
+      }
+    } else {
+      if (map.getLayer('t3d-roads')) map.removeLayer('t3d-roads');
+    }
+  });
+
+  // Trails & paths
+  ctrl.querySelector(`#tc-trails-${cid}`).addEventListener('change', function() {
+    ensureOvfSource();
+    if (this.checked) {
+      if (!map.getLayer('t3d-trails')) {
+        map.addLayer({
+          id: 't3d-trails', type: 'line', source: 'terrain-ovf', 'source-layer': 'transportation',
+          filter: ['match', ['get', 'class'], ['path'], true, false],
+          paint: {
+            'line-color': '#00e5ff',
+            'line-width': ['interpolate', ['linear'], ['zoom'], 8, 0.8, 14, 2],
+            'line-dasharray': [3, 2],
+            'line-opacity': 0.85
+          }
+        });
+      }
+    } else {
+      if (map.getLayer('t3d-trails')) map.removeLayer('t3d-trails');
+    }
+  });
+
+// 3D Buildings
+  ctrl.querySelector(`#tc-buildings-${cid}`).addEventListener('change', function() {
+    if (this.checked) { toggleBuildings(target); }
+    else { toggleBuildings(target); }
+  });
+
+  // Country Borders
+  ctrl.querySelector(`#tc-borders-${cid}`).addEventListener('change', function() {
+    if (this.checked) { toggleBorders(target); }
+    else { toggleBorders(target); }
+  });
+
+  // Lat/Lon Lines
+  ctrl.querySelector(`#tc-graticule-${cid}`).addEventListener('change', function() {
+    if (this.checked) { toggleGraticule(target); }
+    else { toggleGraticule(target); }
+  });
+
+}
+
+/* ---------- EARTHQUAKES ---------- */
+
+function toggleQuakes(target) {
+  let map = (target === 'cmpA') ? cmpA : (target === 'cmpB') ? cmpB : quads[target];
+  if (!map) return;
+
+  // --- TOGGLE OFF ---
+  if (map.getSource('quakes')) {
+    if (map.getLayer('quakes-labels')) map.removeLayer('quakes-labels');
+    if (map.getLayer('quakes'))        map.removeLayer('quakes');
+    map.removeSource('quakes');
+    if (map.getLayer('tectonic-lines')) map.removeLayer('tectonic-lines');
+    if (map.getSource('tectonic'))      map.removeSource('tectonic');
+    const quakesTag = document.getElementById(`tag-quakes-${map.getContainer().id}`);
+    if (quakesTag) quakesTag.remove();
+    const tectonicTag = document.getElementById(`tag-tectonic-${map.getContainer().id}`);
+    if (tectonicTag) tectonicTag.remove();
+    if (map._quakePopup) { map._quakePopup.remove(); delete map._quakePopup; }
+    return;
+  }
+
+  // --- TOGGLE ON ---
+  fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson')
+    .then(r => r.json())
+    .then(data => {
+
+      const now = Date.now();
+
+      // Inject age_days + sort oldest→newest so newest renders on top
+      data.features.forEach(f => {
+        f.properties.age_days = (now - f.properties.time) / 86400000;
+      });
+      data.features.sort((a, b) => a.properties.time - b.properties.time);
+
+      map.addSource('quakes', { type: 'geojson', data });
+
+      // Circle layer
+      map.addLayer({
+        id: 'quakes',
+        type: 'circle',
+        source: 'quakes',
+        paint: {
+          // Size by Richter scale
+          'circle-radius': [
+            'interpolate', ['linear'], ['get', 'mag'],
+            1,  7,
+            2,  10,
+            3,  14,
+            4,  18,
+            5,  23,
+            6,  29,
+            7,  36,
+            8,  44,
+            9,  54
+          ],
+          // Color by age
+          'circle-color': [
+            'step', ['get', 'age_days'],
+            '#e31a1c',       // 0–2 days:  red
+            2,  '#fd8d3c',   // 2–7 days:  orange
+            7,  '#FFD700',   // 7–30 days: yellow
+            30, '#ff69b4'    // 30–60 days: pink
+          ],
+          'circle-opacity': 0.82,
+          'circle-stroke-width': 1.2,
+          'circle-stroke-color': 'rgba(255,255,255,0.55)'
+        }
+      });
+
+      // Magnitude label — centred inside the circle
+      map.addLayer({
+        id: 'quakes-labels',
+        type: 'symbol',
+        source: 'quakes',
+        layout: {
+          'text-field': [
+            'number-format', ['get', 'mag'],
+            { 'min-fraction-digits': 1, 'max-fraction-digits': 1 }
+          ],
+          'text-size': [
+            'interpolate', ['linear'], ['get', 'mag'],
+            1, 7,
+            4, 9,
+            7, 12,
+            9, 14
+          ],
+          'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+          'text-allow-overlap': true,
+          'text-ignore-placement': true,
+          'text-anchor': 'center'
+        },
+        paint: {
+          'text-color': '#ffffff',
+          'text-halo-color': 'rgba(0,0,0,0.6)',
+          'text-halo-width': 1.2
+        }
+      });
+
+      // Hover popup — date, time, depth, location
+      const popup = new maplibregl.Popup({
+        closeButton: false,
+        closeOnClick: false,
+        offset: 12
+      });
+      map._quakePopup = popup;
+
+      map.on('mouseenter', 'quakes', (e) => {
+        map.getCanvas().style.cursor = 'pointer';
+        const f = e.features[0].properties;
+        const date   = new Date(f.time);
+        const dateStr = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        const timeStr = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const depth   = e.features[0].geometry.coordinates[2] ?? f.depth ?? '—';
+        const ageDays = f.age_days;
+        const ageLabel = ageDays < 1   ? 'Today'
+                       : ageDays < 2   ? 'Yesterday'
+                       : ageDays < 7   ? `${Math.floor(ageDays)} days ago`
+                       : ageDays < 30  ? `${Math.floor(ageDays)} days ago`
+                       :                 `${Math.floor(ageDays)} days ago`;
+
+        popup.setLngLat(e.lngLat).setHTML(`
+          <div style="font-family:sans-serif;padding:7px 11px;color:#000;min-width:200px;">
+            <div style="font-weight:bold;font-size:15px;margin-bottom:4px;color:#c00;">
+              M ${parseFloat(f.mag).toFixed(1)}
+            </div>
+            <div style="font-size:11px;color:#333;margin-bottom:6px;line-height:1.4;">${f.place}</div>
+            <div style="display:grid;grid-template-columns:auto 1fr;gap:3px 8px;font-size:11px;color:#555;">
+              <span>📅</span><span>${dateStr}</span>
+              <span>🕐</span><span>${timeStr} UTC</span>
+              <span>🕳️</span><span>Depth: <b>${parseFloat(depth).toFixed(1)} km</b></span>
+              <span>⏱</span><span>${ageLabel}</span>
+            </div>
+          </div>
+        `).addTo(map);
+      });
+
+      map.on('mouseleave', 'quakes', () => {
+        map.getCanvas().style.cursor = '';
+        popup.remove();
+      });
+    });
+
+  // --- Tectonic plates ---
+  fetch('https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json')
+    .then(r => r.json())
+    .then(data => {
+      map.addSource('tectonic', { type: 'geojson', data });
+      map.addLayer({
+        id: 'tectonic-lines',
+        type: 'line',
+        source: 'tectonic',
+        paint: {
+          'line-color': '#ff9900',
+          'line-width': 1.5,
+          'line-opacity': 0.75,
+          'line-dasharray': [4, 2]
+        }
+      });
+    });
+
+  // --- Layer tags ---
+  const containerId = map.getContainer().id;
+  const labelsContainer = document.getElementById(`labels-${containerId}`);
+
+  if (labelsContainer && !document.getElementById(`tag-quakes-${containerId}`)) {
+    const tag = document.createElement('div');
+    tag.className = 'layer-tag';
+    tag.id = `tag-quakes-${containerId}`;
+    tag.innerText = 'LAYER: Earthquakes';
+    labelsContainer.appendChild(tag);
+  }
+}
+
+/* ---------- HELPER: generic raster layer toggle ---------- */
+function _toggleRaster(map, srcId, layerId, tileUrl, opacity, tagText) {
+  const cid = map.getContainer().id;
+  if (map.getSource(srcId)) {
+    if (map.getLayer(layerId)) map.removeLayer(layerId);
+    map.removeSource(srcId);
+    const t = document.getElementById(`tag-${layerId}-${cid}`); if (t) t.remove();
+    return;
+  }
+  map.addSource(srcId, { type: 'raster', tiles: [tileUrl], tileSize: 256 });
+  map.addLayer({ id: layerId, type: 'raster', source: srcId, paint: { 'raster-opacity': opacity } });
+  const lc = document.getElementById(`labels-${cid}`);
+  if (lc && !document.getElementById(`tag-${layerId}-${cid}`)) {
+    const tag = document.createElement('div');
+    tag.className = 'layer-tag';
+    tag.id = `tag-${layerId}-${cid}`;
+    tag.innerText = tagText;
+    lc.appendChild(tag);
+  }
+}
+
+/* ---------- HELPER: generic GeoJSON line layer toggle ---------- */
+function _toggleGeoJSONLine(map, srcId, layerId, url, color, width, tagText) {
+  const cid = map.getContainer().id;
+  if (map.getSource(srcId)) {
+    if (map.getLayer(layerId)) map.removeLayer(layerId);
+    map.removeSource(srcId);
+    const t = document.getElementById(`tag-${layerId}-${cid}`); if (t) t.remove();
+    return;
+  }
+  fetch(url).then(r => r.json()).then(data => {
+    map.addSource(srcId, { type: 'geojson', data });
+    map.addLayer({ id: layerId, type: 'line', source: srcId,
+      paint: { 'line-color': color, 'line-width': width, 'line-opacity': 0.8 }
+    });
+  });
+if (tagText) {
+    const lc = document.getElementById(`labels-${cid}`);
+    if (lc && !document.getElementById(`tag-${layerId}-${cid}`)) {
+      const tag = document.createElement('div');
+      tag.className = 'layer-tag'; tag.id = `tag-${layerId}-${cid}`; tag.innerText = tagText;
+      lc.appendChild(tag);
+    }
+  }
+}
+
+
+/* ---------- 2. COUNTRY BORDERS ---------- */
+function toggleBorders(target) {
+  let map = (target === 'cmpA') ? cmpA : (target === 'cmpB') ? cmpB : quads[target];
+  if (!map) return;
+  _toggleGeoJSONLine(map, 'borders', 'borders-layer',
+    'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_boundary_lines_land.geojson',
+    '#ffffff', 2, null);
+}
+
+/* ---------- 3. CITY LIGHTS (NASA Black Marble) ---------- */
+function toggleCityLights(target) {
+  let map = (target === 'cmpA') ? cmpA : (target === 'cmpB') ? cmpB : quads[target];
+  if (!map) return;
+  _toggleRaster(map, 'citylights', 'citylights-layer',
+    'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_Black_Marble/default/2016-01-01/250m/{z}/{y}/{x}.jpg',
+    0.90, 'LAYER: City Lights (Night)');
+}
+
+/* ---------- 4. POWER GRID & PIPELINES (OpenInfraMap) ---------- */
+function togglePower(target) {
+  let map = (target === 'cmpA') ? cmpA : (target === 'cmpB') ? cmpB : quads[target];
+  if (!map) return;
+  const cid = map.getContainer().id;
+
+  if (map.getSource('power')) {
+    ['power-lines','power-plants','power-substations','pipelines'].forEach(l => {
+      if (map.getLayer(l)) map.removeLayer(l);
+    });
+    map.removeSource('power');
+    if (map.getSource('petroleum')) {
+      if (map.getLayer('pipelines')) map.removeLayer('pipelines');
+      map.removeSource('petroleum');
+    }
+    const t = document.getElementById(`tag-power-layer-${cid}`); if (t) t.remove();
+    return;
+  }
+
+  map.addSource('power', {
+    type: 'vector',
+    tiles: ['https://tiles.openinframap.org/power/{z}/{x}/{y}.pbf'],
+    minzoom: 2, maxzoom: 16
+  });
+  map.addLayer({ id: 'power-lines', type: 'line', source: 'power', 'source-layer': 'power_line',
+    paint: { 'line-color': '#ffff00', 'line-width': 1, 'line-opacity': 0.8 }
+  });
+  map.addLayer({ id: 'power-plants', type: 'circle', source: 'power', 'source-layer': 'power_plant',
+    paint: { 'circle-color': '#ff4400', 'circle-radius': 5, 'circle-opacity': 0.85 }
+  });
+  map.addLayer({ id: 'power-substations', type: 'circle', source: 'power', 'source-layer': 'power_substation',
+    paint: { 'circle-color': '#ffaa00', 'circle-radius': 3, 'circle-opacity': 0.75 }
+  });
+
+  map.addSource('petroleum', {
+    type: 'vector',
+    tiles: ['https://tiles.openinframap.org/petroleum/{z}/{x}/{y}.pbf'],
+    minzoom: 2, maxzoom: 16
+  });
+  map.addLayer({ id: 'pipelines', type: 'line', source: 'petroleum', 'source-layer': 'petroleum_pipeline',
+    paint: { 'line-color': '#00ccff', 'line-width': 1.5, 'line-opacity': 0.8, 'line-dasharray': [3, 2] }
+  });
+
+  const lc = document.getElementById(`labels-${cid}`);
+  if (lc && !document.getElementById(`tag-power-layer-${cid}`)) {
+    const tag = document.createElement('div');
+    tag.className = 'layer-tag'; tag.id = `tag-power-layer-${cid}`;
+    tag.innerText = 'LAYER: Power Grid & Pipelines'; lc.appendChild(tag);
+  }
+}
+
+/* ---------- 5. IRAN AIRPORTS ---------- */
+function toggleIranAirports(target) {
+  let map = (target === 'cmpA') ? cmpA : (target === 'cmpB') ? cmpB : quads[target];
+  if (!map) return;
+  const cid = map.getContainer().id;
+
+  if (map.getSource('airports')) {
+    if (map.getLayer('airports-icons'))  map.removeLayer('airports-icons');
+    map.removeSource('airports');
+    const t = document.getElementById(`tag-airports-layer-${cid}`); if (t) t.remove();
+    if (map._airportPopup) { map._airportPopup.remove(); delete map._airportPopup; }
+    return;
+  }
+
+  // Blue airplane canvas icon
+  if (!map.hasImage('airport-icon')) {
+    const size = 80;
+    const canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    // White halo for contrast
+    ctx.font = 'bold 58px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 6;
+    ctx.strokeText('\u2708', size / 2, size / 2);
+    // Blue fill
+    ctx.fillStyle = '#0055ff';
+    ctx.fillText('\u2708', size / 2, size / 2);
+    map.addImage('airport-icon', ctx.getImageData(0, 0, size, size));
+  }
+
+  const data = { type: 'FeatureCollection', features: [
+    { type: 'Feature', properties: { name: 'Imam Khomeini Intl',  iata: 'IKA', type: 'International'  }, geometry: { type: 'Point', coordinates: [51.1522, 35.4161] } },
+    { type: 'Feature', properties: { name: 'Mehrabad Intl',       iata: 'THR', type: 'International'  }, geometry: { type: 'Point', coordinates: [51.3134, 35.6892] } },
+    { type: 'Feature', properties: { name: 'Isfahan Intl',        iata: 'IFN', type: 'International'  }, geometry: { type: 'Point', coordinates: [51.8611, 32.7508] } },
+    { type: 'Feature', properties: { name: 'Mashhad Intl',        iata: 'MHD', type: 'International'  }, geometry: { type: 'Point', coordinates: [59.6400, 36.2352] } },
+    { type: 'Feature', properties: { name: 'Shiraz Intl',         iata: 'SYZ', type: 'International'  }, geometry: { type: 'Point', coordinates: [52.5898, 29.5392] } },
+    { type: 'Feature', properties: { name: 'Tabriz Intl',         iata: 'TBZ', type: 'International'  }, geometry: { type: 'Point', coordinates: [46.2350, 38.1339] } },
+    { type: 'Feature', properties: { name: 'Ahvaz Intl',          iata: 'AWZ', type: 'International'  }, geometry: { type: 'Point', coordinates: [48.7620, 31.3374] } },
+    { type: 'Feature', properties: { name: 'Bandar Abbas Intl',   iata: 'BND', type: 'International'  }, geometry: { type: 'Point', coordinates: [56.3778, 27.2183] } },
+    { type: 'Feature', properties: { name: 'Kerman Airport',      iata: 'KER', type: 'Domestic'       }, geometry: { type: 'Point', coordinates: [56.9511, 30.2744] } },
+    { type: 'Feature', properties: { name: 'Zahedan Intl',        iata: 'ZAH', type: 'International'  }, geometry: { type: 'Point', coordinates: [60.9062, 29.4757] } },
+    { type: 'Feature', properties: { name: 'Rasht Airport',       iata: 'RAS', type: 'Domestic'       }, geometry: { type: 'Point', coordinates: [49.6178, 37.3233] } },
+    { type: 'Feature', properties: { name: 'Urmia Airport',       iata: 'OMH', type: 'Domestic'       }, geometry: { type: 'Point', coordinates: [45.0687, 37.6681] } },
+    { type: 'Feature', properties: { name: 'Yazd Airport',        iata: 'AZD', type: 'Domestic'       }, geometry: { type: 'Point', coordinates: [54.2765, 31.9049] } },
+    { type: 'Feature', properties: { name: 'Abadan Intl',         iata: 'ABD', type: 'International'  }, geometry: { type: 'Point', coordinates: [48.2283, 30.3711] } },
+    { type: 'Feature', properties: { name: 'Kish Island Intl',    iata: 'KIH', type: 'International'  }, geometry: { type: 'Point', coordinates: [53.9803, 26.5262] } },
+    { type: 'Feature', properties: { name: 'Bushehr Airport',     iata: 'BUZ', type: 'Domestic'       }, geometry: { type: 'Point', coordinates: [50.8310, 28.9448] } },
+    { type: 'Feature', properties: { name: 'Sanandaj Airport',    iata: 'SDG', type: 'Domestic'       }, geometry: { type: 'Point', coordinates: [47.0093, 35.2459] } },
+    { type: 'Feature', properties: { name: 'Hamadan Airport',     iata: 'HDM', type: 'Domestic'       }, geometry: { type: 'Point', coordinates: [48.5525, 34.8692] } }
+  ]};
+
+  map.addSource('airports', { type: 'geojson', data });
+  map.addLayer({
+    id: 'airports-icons',
+    type: 'symbol',
+    source: 'airports',
+    layout: {
+      'icon-image': 'airport-icon',
+      'icon-size': 0.5,
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true
+    }
+  });
+
+  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 14 });
+  map._airportPopup = popup;
+  map.on('mouseenter', 'airports-icons', (e) => {
+    map.getCanvas().style.cursor = 'pointer';
+    const f = e.features[0].properties;
+    popup.setLngLat(e.lngLat).setHTML(`
+      <div style="font-family:sans-serif;padding:6px 10px;color:#000;">
+        <b style="font-size:13px;">&#9992; ${f.name}</b><br>
+        <span style="font-size:11px;color:#555;">IATA: ${f.iata} &nbsp;|&nbsp; ${f.type}</span>
+      </div>`).addTo(map);
+  });
+  map.on('mouseleave', 'airports-icons', () => { map.getCanvas().style.cursor = ''; popup.remove(); });
+}
+
+/* ---------- 6. IRAN AIRBASES ---------- */
+function toggleIranAirbases(target) {
+  let map = (target === 'cmpA') ? cmpA : (target === 'cmpB') ? cmpB : quads[target];
+  if (!map) return;
+  const cid = map.getContainer().id;
+
+  if (map.getSource('airbases')) {
+    if (map.getLayer('airbases-icons')) map.removeLayer('airbases-icons');
+    map.removeSource('airbases');
+    const t = document.getElementById(`tag-airbases-layer-${cid}`); if (t) t.remove();
+    if (map._airbasePopup) { map._airbasePopup.remove(); delete map._airbasePopup; }
+    return;
+  }
+
+  // Red airplane canvas icon
+  if (!map.hasImage('airbase-icon')) {
+    const size = 80;
+    const canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    // White halo for contrast
+    ctx.font = 'bold 58px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 6;
+    ctx.strokeText('\u2708', size / 2, size / 2);
+    // Red fill
+    ctx.fillStyle = '#dd0000';
+    ctx.fillText('\u2708', size / 2, size / 2);
+    map.addImage('airbase-icon', ctx.getImageData(0, 0, size, size));
+  }
+
+  const data = { type: 'FeatureCollection', features: [
+    { type: 'Feature', properties: { name: 'Shahid Nojeh AB',        location: 'Hamadan',     units: 'F-14, Su-24',        status: 'Active'          }, geometry: { type: 'Point', coordinates: [48.6532, 35.2115] } },
+    { type: 'Feature', properties: { name: '8th Tactical FB (Khatami)', location: 'Isfahan',   units: 'F-14, MiG-29',       status: 'Active'          }, geometry: { type: 'Point', coordinates: [51.6917, 32.5017] } },
+    { type: 'Feature', properties: { name: 'Shahid Babai AB (Vahdati)',  location: 'Dezful',   units: 'Su-24, F-4',         status: 'Active'          }, geometry: { type: 'Point', coordinates: [48.3972, 32.4344] } },
+    { type: 'Feature', properties: { name: '6th Fighter Base',        location: 'Bushehr',     units: 'F-7, F-4',           status: 'Active'          }, geometry: { type: 'Point', coordinates: [50.8456, 28.9448] } },
+    { type: 'Feature', properties: { name: '5th Tactical FB',         location: 'Omidiyeh',    units: 'F-5, F-4',           status: 'Active'          }, geometry: { type: 'Point', coordinates: [49.5333, 30.8353] } },
+    { type: 'Feature', properties: { name: '1st Fighter Base (Mehrabad)', location: 'Tehran',  units: 'F-14, F-4, C-130',   status: 'Active/Dual-use' }, geometry: { type: 'Point', coordinates: [51.3134, 35.6892] } },
+    { type: 'Feature', properties: { name: 'Doshan Tappeh AB',        location: 'Tehran',      units: 'Helicopters, UAVs',  status: 'Active'          }, geometry: { type: 'Point', coordinates: [51.4947, 35.7031] } },
+    { type: 'Feature', properties: { name: '2nd Tactical FB',         location: 'Tabriz',      units: 'F-7, MiG-29',        status: 'Active'          }, geometry: { type: 'Point', coordinates: [46.2600, 38.1200] } },
+    { type: 'Feature', properties: { name: '3rd Tactical FB',         location: 'Bandar Abbas', units: 'F-14, Su-22',       status: 'Active'          }, geometry: { type: 'Point', coordinates: [56.4500, 27.2100] } },
+    { type: 'Feature', properties: { name: 'Mashhad Air Base',        location: 'Mashhad',     units: 'F-5, transport',     status: 'Active'          }, geometry: { type: 'Point', coordinates: [59.6100, 36.2200] } },
+    { type: 'Feature', properties: { name: 'Zahedan Air Base',        location: 'Zahedan',     units: 'F-5, border patrol', status: 'Active'          }, geometry: { type: 'Point', coordinates: [60.8900, 29.4900] } },
+    { type: 'Feature', properties: { name: 'Ahvaz Air Base',          location: 'Ahvaz',       units: 'F-5, helicopters',   status: 'Active'          }, geometry: { type: 'Point', coordinates: [48.7400, 31.3200] } },
+    { type: 'Feature', properties: { name: 'Shahid Ashrafi AB',       location: 'Kermanshah',  units: 'Su-24, helicopters', status: 'Active'          }, geometry: { type: 'Point', coordinates: [47.1581, 34.3459] } }
+  ]};
+
+  map.addSource('airbases', { type: 'geojson', data });
+  map.addLayer({
+    id: 'airbases-icons',
+    type: 'symbol',
+    source: 'airbases',
+    layout: {
+      'icon-image': 'airbase-icon',
+      'icon-size': 0.5,
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true
+    }
+  });
+
+  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 14 });
+  map._airbasePopup = popup;
+  map.on('mouseenter', 'airbases-icons', (e) => {
+    map.getCanvas().style.cursor = 'pointer';
+    const f = e.features[0].properties;
+    popup.setLngLat(e.lngLat).setHTML(`
+      <div style="font-family:sans-serif;padding:6px 10px;color:#000;min-width:180px;">
+        <b style="font-size:13px;color:#c00;">&#9992; ${f.name}</b><br>
+        <div style="font-size:11px;margin-top:4px;color:#333;">
+          <b>Location:</b> ${f.location}<br>
+          <b>Aircraft:</b> ${f.units}<br>
+          <b>Status:</b> ${f.status}
+        </div>
+      </div>`).addTo(map);
+  });
+  map.on('mouseleave', 'airbases-icons', () => { map.getCanvas().style.cursor = ''; popup.remove(); });
+}
+
+/* ---------- 8. POPULATION DENSITY HEATMAP (NASA GIBS GPW) ---------- */
+function togglePopulation(target) {
+  let map = (target === 'cmpA') ? cmpA : (target === 'cmpB') ? cmpB : quads[target];
+  if (!map) return;
+  _toggleRaster(map, 'population', 'population-layer',
+    'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GPW_Population_Density/default/2020-01-01/250m/{z}/{y}/{x}.png',
+    0.75, 'LAYER: Population Density');
+}
+
+/* ---------- LAT/LON GRATICULE ---------- */
+function toggleGraticule(target) {
+  let map = (target === 'cmpA') ? cmpA : (target === 'cmpB') ? cmpB : quads[target];
+  if (!map) return;
+  const cid = map.getContainer().id;
+
+  if (map.getSource('graticule')) {
+    ['graticule-lines','graticule-equator'].forEach(l => { if (map.getLayer(l)) map.removeLayer(l); });
+    ['graticule','graticule-eq'].forEach(s => { if (map.getSource(s)) map.removeSource(s); });
+    if (map._graticuleListener) {
+      map.off('zoomend', map._graticuleListener);
+      map.off('moveend', map._graticuleListener);
+      delete map._graticuleListener;
+    }
+    const overlay = document.getElementById(`graticule-overlay-${cid}`);
+    if (overlay) overlay.remove();
+    const t = document.getElementById(`tag-graticule-${cid}`); if (t) t.remove();
+    return;
+  }
+
+  function getStep(zoom) {
+    if (zoom < 2)  return 45;
+    if (zoom < 3)  return 30;
+    if (zoom < 4)  return 15;
+    if (zoom < 5)  return 10;
+    if (zoom < 6)  return 5;
+    if (zoom < 8)  return 2;
+    if (zoom < 10) return 1;
+    if (zoom < 12) return 0.5;
+    return 0.25;
+  }
+
+  function fmtLat(v) { if (v === 0) return '0°'; return Math.abs(v) + '°' + (v > 0 ? 'N' : 'S'); }
+  function fmtLng(v) { if (v === 0) return '0°'; return Math.abs(v) + '°' + (v > 0 ? 'E' : 'W'); }
+
+  // Create HTML overlay div
+  const container = map.getContainer();
+  const overlay = document.createElement('div');
+  overlay.id = `graticule-overlay-${cid}`;
+  overlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;overflow:hidden;';
+  container.appendChild(overlay);
+
+  function updateLines() {
+    const step   = getStep(map.getZoom());
+    const bounds = map.getBounds();
+    const west   = bounds.getWest();
+    const east   = bounds.getEast();
+    const south  = Math.max(-85, bounds.getSouth());
+    const north  = Math.min( 85, bounds.getNorth());
+
+    // Update GeoJSON lines
+    const lines = [];
+    const lngStart = Math.floor(west / step) * step;
+    const lngEnd   = Math.ceil(east  / step) * step;
+    for (let lng = lngStart; lng <= lngEnd + 1e-9; lng += step) {
+      const l = +lng.toFixed(6);
+      if (l === 0 || l < -180 || l > 180) continue;
+      lines.push({ type:'Feature', geometry:{ type:'LineString', coordinates:[[l,-85.05],[l,85.05]] } });
+    }
+    const latStart = Math.floor(south / step) * step;
+    const latEnd   = Math.ceil(north  / step) * step;
+    for (let lat = latStart; lat <= latEnd + 1e-9; lat += step) {
+      const l = +lat.toFixed(6);
+      if (l === 0 || l < -85 || l > 85) continue;
+      lines.push({ type:'Feature', geometry:{ type:'LineString', coordinates:[[-180,l],[180,l]] } });
+    }
+    if (map.getSource('graticule')) map.getSource('graticule').setData({ type:'FeatureCollection', features:lines });
+
+    // Update HTML labels
+    overlay.innerHTML = '';
+    const W = container.offsetWidth;
+    const H = container.offsetHeight;
+    const MARGIN = 6;
+
+    // Longitude labels — placed near top of frame
+    for (let lng = lngStart; lng <= lngEnd + 1e-9; lng += step) {
+      const l = +lng.toFixed(6);
+      if (l < -180 || l > 180) continue;
+      const px = map.project([l, north]);
+      if (px.x < 30 || px.x > W - 30) continue;
+      const el = document.createElement('div');
+      el.innerText = fmtLng(l);
+      el.style.cssText = `
+        position:absolute;
+        left:${px.x}px;
+        top:${MARGIN + 2}px;
+        transform:translateX(-50%);
+        font-size:10px;
+        font-weight:600;
+        font-family:monospace;
+        color:#fff;
+        text-shadow:0 0 3px #000,0 0 3px #000,0 0 3px #000;
+        white-space:nowrap;
+        background:rgba(0,0,0,0.35);
+        padding:1px 3px;
+        border-radius:2px;
+      `;
+      overlay.appendChild(el);
+    }
+
+    // Latitude labels — placed near left edge of frame
+    for (let lat = latStart; lat <= latEnd + 1e-9; lat += step) {
+      const l = +lat.toFixed(6);
+      if (l < -85 || l > 85) continue;
+      const px = map.project([west + (east - west) * 0.01, l]);
+      if (px.y < 20 || px.y > H - 20) continue;
+      const el = document.createElement('div');
+      el.innerText = fmtLat(l);
+      el.style.cssText = `
+        position:absolute;
+        left:${MARGIN + 2}px;
+        top:${px.y}px;
+        transform:translateY(-50%);
+        font-size:10px;
+        font-weight:600;
+        font-family:monospace;
+        color:#fff;
+        text-shadow:0 0 3px #000,0 0 3px #000,0 0 3px #000;
+        white-space:nowrap;
+        background:rgba(0,0,0,0.35);
+        padding:1px 3px;
+        border-radius:2px;
+      `;
+      overlay.appendChild(el);
+    }
+
+    // Equator label
+    const eqPx = map.project([west + (east - west) * 0.01, 0]);
+    if (eqPx.y > 20 && eqPx.y < H - 20) {
+      const el = document.createElement('div');
+      el.innerText = 'Equator';
+      el.style.cssText = `
+        position:absolute;
+        left:${MARGIN + 2}px;
+        top:${eqPx.y}px;
+        transform:translateY(-50%);
+        font-size:10px;
+        font-weight:700;
+        font-family:monospace;
+        color:rgba(255,210,80,1);
+        text-shadow:0 0 4px #000,0 0 4px #000;
+        white-space:nowrap;
+        background:rgba(0,0,0,0.45);
+        padding:1px 4px;
+        border-radius:2px;
+      `;
+      overlay.appendChild(el);
+    }
+  }
+
+  // GeoJSON lines sources
+  map.addSource('graticule', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
+  map.addSource('graticule-eq', { type:'geojson', data:{ type:'FeatureCollection', features:[
+    { type:'Feature', geometry:{ type:'LineString', coordinates:[[-180,0],[180,0]] } },
+    { type:'Feature', geometry:{ type:'LineString', coordinates:[[0,-85.05],[0,85.05]] } }
+  ]}});
+
+  map.addLayer({
+    id:'graticule-lines', type:'line', source:'graticule',
+    paint:{ 'line-color':'rgba(255,255,255,0.55)', 'line-width':1.2, 'line-dasharray':[5,4] }
+  });
+  map.addLayer({
+    id:'graticule-equator', type:'line', source:'graticule-eq',
+    paint:{ 'line-color':'rgba(255,210,80,0.95)', 'line-width':2.2 }
+  });
+
+  updateLines();
+
+  map._graticuleListener = () => { if (map.getSource('graticule')) updateLines(); };
+  map.on('zoomend', map._graticuleListener);
+  map.on('moveend', map._graticuleListener);
+}
+
+/* ---------- VIEWSHED ANALYSIS ---------- */
+function toggleViewshed(target) {
+  let map = (target === 'cmpA') ? cmpA : (target === 'cmpB') ? cmpB : quads[target];
+  if (!map) return;
+  const cid = map.getContainer().id;
+
+  // Toggle OFF
+  if (map.getSource('viewshed')) {
+    ['viewshed-fill','viewshed-outline'].forEach(l => { if (map.getLayer(l)) map.removeLayer(l); });
+    map.removeSource('viewshed');
+    if (map._vsMarker) { map._vsMarker.remove(); delete map._vsMarker; }
+    const ctrl = document.getElementById(`vs-ctrl-${cid}`); if (ctrl) ctrl.remove();
+    const t = document.getElementById(`tag-viewshed-${cid}`); if (t) t.remove();
+    return;
+  }
+
+  // Build draggable observer pin element
+  const pinEl = document.createElement('div');
+  pinEl.title = 'Drag to move observer';
+  pinEl.style.cssText = 'cursor:grab;width:32px;height:40px;';
+  pinEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="46" height="36" viewBox="0 0 36 28">
+    <path d="M1 14 C8 3 28 3 35 14 C28 25 8 25 1 14Z" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.8"/>
+    <circle cx="18" cy="14" r="6" fill="#fff" stroke="#2e7d32" stroke-width="1"/>
+    <circle cx="18" cy="14" r="4" fill="#2e7d32"/>
+    <circle cx="20" cy="12" r="1.5" fill="#fff"/>
+    <path d="M1 14 C8 3 28 3 35 14" fill="none" stroke="#1b5e20" stroke-width="0.5" opacity="0.5"/>
+  </svg>`;
+
+  // Place marker at current map center
+  const center = map.getCenter();
+  const marker = new maplibregl.Marker({ element: pinEl, draggable: true, anchor: 'center' })
+    .setLngLat([center.lng, center.lat])
+    .addTo(map);
+  map._vsMarker = marker;
+
+  // Control panel
+  const container = map.getContainer();
+  const ctrl = document.createElement('div');
+  ctrl.id = `vs-ctrl-${cid}`;
+  ctrl.style.cssText = `
+    position:absolute;top:50px;right:46px;z-index:999;
+    background:rgba(0,0,0,0.82);color:#fff;padding:10px 12px;
+    border-radius:8px;font-family:monospace;font-size:11px;
+    border:1px solid #555;min-width:180px;pointer-events:all;
+  `;
+  ctrl.innerHTML = `
+    <div style="font-weight:bold;margin-bottom:8px;color:#ff9800;letter-spacing:1px;">⬡ VIEWSHED</div>
+    <div style="margin-bottom:4px;color:#aaa;font-size:10px;">Drag the orange pin to set observer</div>
+    <div style="margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+        <span>Radius</span><span id="vs-rv-${cid}" style="color:#ff9800;">3 km</span>
+      </div>
+      <input id="vs-r-${cid}" type="range" min="0.5" max="20" step="0.5" value="3"
+        style="width:100%;accent-color:#ff9800;">
+    </div>
+    <div id="vs-st-${cid}" style="color:#888;font-size:10px;">Computing...</div>
+  `;
+  container.appendChild(ctrl);
+
+  const radiusInput = ctrl.querySelector(`#vs-r-${cid}`);
+  const radiusVal   = ctrl.querySelector(`#vs-rv-${cid}`);
+  const statusEl    = ctrl.querySelector(`#vs-st-${cid}`);
+
+  radiusInput.addEventListener('input', () => { radiusVal.textContent = radiusInput.value + ' km'; });
+  radiusInput.addEventListener('change', run);
+
+  // Empty source + layers
+  map.addSource('viewshed', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+  map.addLayer({ id: 'viewshed-fill', type: 'fill', source: 'viewshed',
+    paint: { 'fill-color': '#00e676', 'fill-opacity': 0.22 } });
+  map.addLayer({ id: 'viewshed-outline', type: 'line', source: 'viewshed',
+    paint: { 'line-color': '#00e676', 'line-width': 1.5, 'line-opacity': 0.85 } });
+
+  async function run() {
+    if (!map.getSource('viewshed')) return;
+    const pos = marker.getLngLat();
+    const radiusM = parseFloat(radiusInput.value) * 1000;
+    statusEl.textContent = '⏳ 0%';
+    statusEl.style.color = '#ffb74d';
+    try {
+      const feature = await _computeViewshed(pos.lng, pos.lat, radiusM, map.getBearing(), p => {
+        if (statusEl) statusEl.textContent = `⏳ ${Math.round(p * 100)}%`;
+      });
+      if (map.getSource('viewshed')) {
+        map.getSource('viewshed').setData({ type: 'FeatureCollection', features: [feature] });
+        statusEl.textContent = `✓ Done · drag pin to move`;
+        statusEl.style.color = '#69f0ae';
+      }
+    } catch(err) {
+      if (statusEl) { statusEl.textContent = '✗ Error'; statusEl.style.color = '#ef9a9a'; }
+      console.error(err);
+    }
+  }
+
+  // Only recompute when pin is dragged — NOT on map move
+  marker.on('dragend', run);
+  pinEl.style.cursor = 'grab';
+  marker.on('dragstart', () => { pinEl.style.cursor = 'grabbing'; });
+  marker.on('dragend',   () => { pinEl.style.cursor = 'grab'; });
+
+  run();
+
+  const lc = document.getElementById(`labels-${cid}`);
+  if (lc && !document.getElementById(`tag-viewshed-${cid}`)) {
+    const tag = document.createElement('div'); tag.className = 'layer-tag';
+    tag.id = `tag-viewshed-${cid}`; tag.innerText = 'LAYER: Viewshed'; lc.appendChild(tag);
+  }
+}
+
+/* ---------- 9. LIVE WEATHER CLOUDS (RainViewer Satellite IR) ---------- */
+function toggleWeatherCloud(target) {
+  let map = (target === 'cmpA') ? cmpA : (target === 'cmpB') ? cmpB : quads[target];
+  if (!map) return;
+  const cid = map.getContainer().id;
+
+  if (map.getSource('weathercloud')) {
+    if (map.getLayer('weathercloud-layer')) map.removeLayer('weathercloud-layer');
+    map.removeSource('weathercloud');
+    const t = document.getElementById(`tag-weathercloud-layer-${cid}`); if (t) t.remove();
+    return;
+  }
+
+  fetch('https://api.rainviewer.com/public/weather-maps.json')
+    .then(r => r.json())
+    .then(data => {
+      const frames = data.satellite && data.satellite.infrared;
+      if (!frames || !frames.length) return;
+      const path = frames[frames.length - 1].path;
+      const url = `https://tilecache.rainviewer.com${path}/256/{z}/{x}/{y}/0/0_0.png`;
+      map.addSource('weathercloud', { type: 'raster', tiles: [url], tileSize: 256 });
+      map.addLayer({ id: 'weathercloud-layer', type: 'raster', source: 'weathercloud',
+        paint: { 'raster-opacity': 0.65 }
+      });
+    });
+
+  const lc = document.getElementById(`labels-${cid}`);
+  if (lc && !document.getElementById(`tag-weathercloud-layer-${cid}`)) {
+    const tag = document.createElement('div'); tag.className = 'layer-tag';
+    tag.id = `tag-weathercloud-layer-${cid}`; tag.innerText = 'LAYER: Live Weather Clouds'; lc.appendChild(tag);
+  }
+}
+
+/* ---------- 10. THERMAL ANOMALIES (NASA GIBS VIIRS) ---------- */
+function toggleThermal(target) {
+  let map = (target === 'cmpA') ? cmpA : (target === 'cmpB') ? cmpB : quads[target];
+  if (!map) return;
+  // Use 2 days ago — VIIRS has ~1-2 day processing delay
+  const d = new Date(Date.now() - 2 * 86400000);
+  const dateStr = d.toISOString().slice(0, 10);
+  _toggleRaster(map, 'thermal', 'thermal-layer',
+    `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_Thermal_Anomalies_375m_All/default/${dateStr}/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg`,
+    0.80, 'LAYER: Thermal Anomalies');
+}
+
+/* ---------- MODE ---------- */
+
+function setMode(mode) {
+  // Hide ALL outsource/external navigation containers
+  document.getElementById('streetNav').classList.add('hidden');
+  document.getElementById('terrainNav').classList.add('hidden');
+  
+  // Capture current position before switching
+  let currentMap = (cmpA) ? cmpA : quads[activeQuad];
+  if (currentMap) {
+    let c = currentMap.getCenter();
+    savedView = { center: [c.lng, c.lat], zoom: currentMap.getZoom() };
+  }
+
+  if (mode === 'grid') {
+    document.getElementById('grid').classList.remove('hidden');
+    document.getElementById('compare').classList.add('hidden');
+    if (cmpA) { cmpA.remove(); cmpA = null; }
+    if (cmpB) { cmpB.remove(); cmpB = null; }
+    
+    requestAnimationFrame(() => {
+      syncing = true;
+      quads.forEach(m => { m.resize(); m.jumpTo(savedView); });
+      syncing = false;
+    });
+    return;
+  }
+
+  // --- COMPARE MODE ---
+  document.getElementById('compare').classList.remove('hidden');
+  document.getElementById('grid').classList.add('hidden');
+
+  if (cmpA) cmpA.remove();
+  if (cmpB) cmpB.remove();
+
+  cmpA = createMap('cmpA', 'sat');
+  const navA = new maplibregl.NavigationControl({
+    showCompass: true,
+    showZoom: false,
+    visualizePitch: true
+  });
+  cmpA.addControl(navA, 'top-left');
+
+  cmpB = createMap('cmpB', 'countries');
+
+  cmpA.on('mouseenter', () => { activeQuad = 'cmpA'; });
+
+  cmpA.on('load', () => { cmpA.jumpTo(savedView); });
+  cmpB.on('load', () => { cmpB.jumpTo(savedView); });
+
+  let cmpLock = false;
+  const sync = (src, dest) => {
+    if (cmpLock) return;
+    cmpLock = true;
+    dest.jumpTo({ center: src.getCenter(), zoom: src.getZoom() });
+    savedView = { center: [src.getCenter().lng, src.getCenter().lat], zoom: src.getZoom() };
+    cmpLock = false;
+  };
+
+  cmpA.on('move', () => {
+    updateSidebarCoords(cmpA);
+    sync(cmpA, cmpB);
+  });
+
+  cmpB.on('move', () => {
+    updateSidebarCoords(cmpB);
+    sync(cmpB, cmpA);
+  });
+
+  const divider = document.getElementById('divider');
+  const container = document.getElementById('compare');
+  const mapBElement = document.getElementById('cmpB');
+
+  function moveDivider(x) {
+    let rect = container.getBoundingClientRect();
+    let percent = ((x - rect.left) / rect.width) * 100;
+    percent = Math.max(0, Math.min(100, percent));
+    divider.style.left = percent + '%';
+    mapBElement.style.clipPath = `inset(0 0 0 ${percent}%)`;
+  }
+
+  let isDragging = false;
+  divider.onmousedown = (e) => { isDragging = true; e.preventDefault(); };
+  window.onmouseup = () => isDragging = false;
+  window.onmousemove = (e) => { if (isDragging) moveDivider(e.clientX); };
+  
+  divider.style.left = '50%';
+  mapBElement.style.clipPath = 'inset(0 0 0 50%)';
+}
+
+function updateSidebarCoords(mapInstance) {
+  const center = mapInstance.getCenter();
+  document.getElementById('lat-val').innerText = `Lat: ${center.lat.toFixed(4)}`;
+  document.getElementById('lng-val').innerText = `Lng: ${center.lng.toFixed(4)}`;
+}
+
+
+
+/**
+ * Updates the visibility and text of the map corner label
+ * @param {Object} map - The MapLibre instance
+ * @param {String} layerName - The name to display (or null to hide)
+ */
+function updateMapLabel(map, layerName) {
+    const containerId = map.getContainer().id;
+    const label = document.getElementById(`label-${containerId}`);
+    if (!label) return;
+
+    if (layerName) {
+        label.innerText = `ACTIVE LAYER: ${layerName.toUpperCase()}`;
+        label.style.display = 'block';
+    } else {
+        label.style.display = 'none';
+    }
+}
+
+function openStreetNav() {
+  // Hide existing map modes
+  document.getElementById('grid').classList.add('hidden');
+  document.getElementById('compare').classList.add('hidden');
+
+  // Show iframe container
+  const container = document.getElementById('streetNav');
+  container.classList.remove('hidden');
+
+  // Inject iframe (only once)
+  if (!container.innerHTML) {
+    container.innerHTML = `
+      <iframe 
+        style="width:100%;height:100vh;border:0;"
+        src="https://data.mapchannels.com/dualmaps8/map.htm?lat=32.076263&lng=34.774725&z=15&slat=32&slng=34&sh=197.189&sp=-20.955&sz=4&gm=0&panel=msbi&mi=1&be=0&pv=1&pc=1"
+        allowfullscreen
+        scrolling="no">
+      </iframe>
+      <div style="position:absolute;bottom:5px;left:10px;z-index:1000;">
+        <a target="_blank" href="https://www.mapchannels.com/DualMaps.aspx" style="color:#ccc;font-size:12px;">
+          Dual Maps
+        </a>
+      </div>
+    `;
+  }
+}
+
+
+function openTerrainNav() {
+  // Hide other modes
+  document.getElementById('grid').classList.add('hidden');
+  document.getElementById('compare').classList.add('hidden');
+  document.getElementById('streetNav').classList.add('hidden');
+
+  const container = document.getElementById('terrainNav');
+  container.classList.remove('hidden');
+
+  if (!container.innerHTML) {
+    container.innerHTML = `
+      <iframe 
+        style="width:100%;height:100vh;border:0;"
+        src="https://openridge.netlify.app/"
+        allowfullscreen
+        loading="lazy">
+      </iframe>
+    `;
+  }
+}
+
+
+async function drawElevationProfile(coords) {
+  // coords = [[lng, lat], [lng, lat], ...]
+
+  const elevations = [];
+
+  for (let [lng, lat] of coords) {
+    const res = await fetch(`https://api.open-elevation.com/api/v1/lookup?locations=${lat},${lng}`);
+    const data = await res.json();
+    elevations.push(data.results[0].elevation);
+  }
+
+  const ctx = document.getElementById('elevationChart');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: elevations.map((_, i) => i),
+      datasets: [{
+        label: 'Elevation (m)',
+        data: elevations,
+        fill: false,
+        tension: 0.2
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: true } },
+      scales: {
+        x: { display: false },
+        y: { title: { display: true, text: 'Meters' } }
+      }
+    }
+  });
+}
+
+</script>
+</body>
+</html>
