@@ -1,0 +1,235 @@
+{
+  "timezone": "Asia/Jerusalem",
+  "telegram_bot_token": "",
+  "telegram_chat_id": "",
+  "telegram_channel_name": "My Alert Channel",
+  "outputs": [
+    {
+      "id": "main",
+      "chat_id": "",
+      "language": "en",
+      "content": [
+        "all"
+      ],
+      "min_severity": "LOW",
+      "images": "all",
+      "timezone": "America/New_York"
+    },
+    {
+      "id": "hebrew",
+      "chat_id": "",
+      "language": "he",
+      "content": [
+        "siren",
+        "siren_standdown",
+        "siren_clear",
+        "breaking_news",
+        "threat_change",
+        "osint",
+        "fires",
+        "seismic",
+        "strike_correlation",
+        "blackout",
+        "military_flights",
+        "polymarket",
+        "cyber",
+        "map",
+        "flight_map",
+        "summary_he",
+        "timelapse",
+        "pinned_status"
+      ],
+      "min_severity": "LOW",
+      "images": "high_only",
+      "timezone": "Asia/Jerusalem"
+    }
+  ],
+  "oref_poll_interval": 30,
+  "polymarket_poll_interval": 300,
+  "polymarket_spike_threshold": 5,
+  "twitter_poll_interval": 300,
+  "twitter_accounts": [
+    "PenPizzaReport",
+    "Conflict_Radar",
+    "Worldsource24",
+    "sentdefender",
+    "beholdisrael",
+    "Osint613",
+    "Osinttechnical",
+    "IsraelRadar_",
+    "Intel_Sky",
+    "ELINTNews",
+    "IsraelWarRoom"
+  ],
+  "telegram_osint_channels": [
+    "warmonitors",
+    "intelslava",
+    "liveuamap",
+    "AbuAliExpress",
+    "flash_news_il",
+    "idfonline",
+    "iranintl_en",
+    "BBCPersian",
+    "kann_news",
+    "aharonyediot"
+  ],
+  "rss_feeds": [
+    {
+      "name": "Times of Israel",
+      "url": "https://www.timesofisrael.com/feed/"
+    },
+    {
+      "name": "Jerusalem Post",
+      "url": "https://www.jpost.com/rss/rssfeedsfrontpage.aspx"
+    },
+    {
+      "name": "Al Jazeera",
+      "url": "https://www.aljazeera.com/xml/rss/all.xml"
+    },
+    {
+      "name": "TASS",
+      "url": "https://tass.com/rss/v2.xml"
+    },
+    {
+      "name": "Ynet",
+      "url": "https://www.ynet.co.il/Integration/StoryRss2.xml"
+    },
+    {
+      "name": "Reuters",
+      "url": "https://news.google.com/rss/search?q=site:reuters.com+iran+OR+israel&hl=en-US&gl=US&ceid=US:en"
+    },
+    {
+      "name": "AP News",
+      "url": "https://news.google.com/rss/search?q=site:apnews.com+iran+OR+israel&hl=en-US&gl=US&ceid=US:en"
+    }
+  ],
+  "osint_keywords": [
+    "iran",
+    "israel",
+    "idf",
+    "hezbollah",
+    "houthi",
+    "irgc",
+    "missile",
+    "strike",
+    "attack",
+    "intercept",
+    "siren",
+    "ballistic",
+    "rocket",
+    "drone",
+    "escalation",
+    "retaliation",
+    "tehran",
+    "netanyahu",
+    "gaza",
+    "beirut",
+    "hamas",
+    "pentagon",
+    "centcom",
+    "carrier",
+    "nuclear",
+    "enrichment",
+    "natanz",
+    "fordow",
+    "iron dome",
+    "arrow",
+    "david's sling",
+    "thaad",
+    "war",
+    "ceasefire",
+    "pizza",
+    "delivery",
+    "איראן",
+    "טיל",
+    "רקטה",
+    "צבא",
+    "תקיפה",
+    "יירוט",
+    "פיקוד העורף",
+    "אזעקה",
+    "חיזבאללה",
+    "חמאס",
+    "צה\"ל",
+    "בליסטי",
+    "מל\"ט",
+    "הסלמה",
+    "khamenei",
+    "חמינאי",
+    "supreme leader",
+    "המנהיג העליון",
+    "פיצוץ",
+    "פיצוצים",
+    "כטבמ",
+    "מזל\"ט",
+    "יורט",
+    "טהרן",
+    "צפון",
+    "דרום",
+    "לבנון",
+    "סוריה",
+    "תימן",
+    "חיל האוויר",
+    "ירי",
+    "שיגור",
+    "נפילה"
+  ],
+  "usgs_seismic": {
+    "enabled": true,
+    "min_latitude": 25,
+    "max_latitude": 40,
+    "min_longitude": 44,
+    "max_longitude": 63,
+    "min_magnitude": 3.5
+  },
+  "strikes": {
+    "acled_email": "",
+    "acled_password": "",
+    "countries": [
+      "Iran",
+      "Israel",
+      "Lebanon",
+      "Syria",
+      "Iraq",
+      "Yemen",
+      "Palestine",
+      "Saudi Arabia",
+      "Jordan"
+    ],
+    "event_types": [
+      "Explosions/Remote violence",
+      "Battles",
+      "Violence against civilians"
+    ],
+    "sub_event_types": [
+      "Air/drone strike",
+      "Shelling/artillery/missile attack",
+      "Suicide bomb",
+      "Remote explosive/landmine/IED",
+      "Armed clash",
+      "Attack",
+      "Chemical weapon"
+    ],
+    "start_date": "2023-10-07",
+    "window_days": null,
+    "max_events": 50000,
+    "poll_interval_hours": 6,
+    "include_firms": true,
+    "include_seismic": true,
+    "include_correlations": true,
+    "include_osint": true,
+    "min_fatalities": 0,
+    "actor_filter": [],
+    "map_width": 1600,
+    "map_height": 1000,
+    "highlight_recent_hours": 48,
+    "show_legend": true
+  },
+  "dashboard": {
+    "api_url": "",
+    "api_url_comment": "Optional: base URL of the Magen Yehuda API backend (e.g. https://your-app.azurecontainerapps.io). Leave empty to use static JSON files from GitHub Pages.",
+    "oref_poll_interval_ms": 30000,
+    "fires_poll_interval_ms": 60000,
+    "osint_poll_interval_ms": 60000
+  }
+}

@@ -1,0 +1,810 @@
+# 🛡️ Magen Yehuda Bot — Iran-Israel Real-Time Intelligence Monitor
+
+Multi-source intelligence aggregation for Iran/Israel/US military escalation. Adaptive threat-level system, 85+ OSINT sources, satellite fire detection, seismic monitoring, flight tracking, internet blackout detection, strike correlation, cyber warfare monitoring, wire service integration, multi-source corroboration, bilingual alerts with per-channel timezones, and instant Telegram delivery.
+
+![Threat Levels](https://img.shields.io/badge/threat_levels-GREEN_%7C_ELEVATED_%7C_HIGH_%7C_CRITICAL-brightgreen)
+![Sources](https://img.shields.io/badge/sources-85%2B_channels-blue)
+![Delivery](https://img.shields.io/badge/delivery-Telegram-26A5E4)
+![Languages](https://img.shields.io/badge/languages-English_%2B_Hebrew-ff69b4)
+
+## What It Does
+
+Monitors 85+ intelligence sources across 16 categories, auto-adjusts polling frequency based on threat level, auto-detects and corroborates breaking news from credible sources, and pushes instant bilingual alerts to Telegram channels with per-channel timezones:
+
+| Source | Channels | Speed | Auth Required |
+|--------|----------|-------|---------------|
+| 🚨 **Pikud HaOref** (sirens) | Israeli siren API | 10-30s | None (Israeli IP) |
+| 📢 **Telegram OSINT** | 10 public channels | 30s-5min | None |
+| 🐦 **X/Twitter OSINT** | 11 accounts | 30s-5min | None |
+| 📰 **RSS Feeds** | 7 news outlets | 30s-5min | None |
+| 🌍 **USGS Seismic** | Iran region (M2.5+) | 30s-5min | None |
+| 📊 **Polymarket** | Prediction markets | 60s-5min | None |
+| 🔥 **NASA FIRMS** | 4 satellites | 3-15min | Free MAP_KEY |
+| 🌐 **Internet Blackout** | IODA + 3 direct probes | 5-30min | None |
+| ✈️ **Military Flights** | ADS-B (OpenSky) | 5-30min | None |
+| ✈️ **Flight Radar** | FR24 air traffic | Hourly map | None |
+| 🎯 **Strike Correlation** | Fire + seismic fusion | After each scan | None |
+| 🛡️ **Cyber Hacktivist TG** | 25 handles (19 groups) | 5-30min | None |
+| 🛡️ **Cyber CTI Twitter** | 8 accounts | 5-30min | None |
+| 🛡️ **Dark Web / Breach RSS** | 4 feeds | 5-30min | None |
+| 🚢 **Naval Tracking** | AIS vessel data | 5-30min | None |
+
+### Key Features
+
+- **Adaptive threat system** — Polling scales from 5min (GREEN) to 30s (CRITICAL) based on siren activity
+- **Breaking news corroboration** — Auto-tracks sources per topic; 3+ reputable sources (Reuters, AP, BBC, etc.) = CONFIRMED with source list; <3 = UNVERIFIED with count
+- **Multi-channel dispatch** — Route alerts to English and/or Hebrew channels with language-specific formatting
+- **Per-channel timezones** — English channel shows ET, Hebrew channel shows IST (configurable per output)
+- **Hebrew threat levels** — שגרה (GREEN), מוגבר (ELEVATED), גבוה (HIGH), קריטי (CRITICAL) — all alert types fully translated
+- **Satellite fire detection** — 4 NASA satellites, proximity to 23 known nuclear/military/oil sites
+- **Internet blackout early warning** — Iran historically cuts internet before military operations
+- **Strike correlation engine** — Automatic fire + seismic coincidence detection (50km/30min window)
+- **US/Israeli military flight tracking** — 50+ aircraft type→role mappings, filtered to relevant assets only
+- **Cyber warfare monitor** — 19 hacktivist groups (25 TG handles), 8 CTI Twitter accounts, 4 dark web feeds, auto-classification
+- **Live pinned status dashboard** — Single message edited every 60s with full system state (separate EN/HE versions)
+- **Bilingual hourly reports** — Intel map + flight map + Hebrew summary + English summary + 24h time-lapse GIF
+- **Wire service integration** — Reuters and AP News via Google News RSS proxy (direct feeds are Cloudflared)
+- **Attack classification** — Auto-categorizes ICS/SCADA, data breach, ransomware, DDoS, espionage with severity scoring
+- **Naval vessel tracking** — US Navy, IRGC Navy, zone classification, naval base proximity
+
+## 🗺️ Interactive Theater Operations Dashboard
+
+**Live Dashboard:** [magen-yehuda-intel.github.io/magen-yehuda-bot](https://magen-yehuda-intel.github.io/magen-yehuda-bot/)
+
+A Leaflet-based interactive web dashboard visualizing **48,000+ geolocated conflict events** across the Middle East since October 7, 2023.
+
+### Features
+
+- **Theater Select** — 9 operational theaters including Persian Gulf, each with tailored map bounds and context
+- **14 Conflict Phase Presets** — Jump to key moments: Oct 7 attack, Iran April strikes, Lebanon ground ops, Houthi naval campaign, and more
+- **Force Disposition** — Filter events by side (Israel, Iran, Iran proxies, US/Coalition, Unknown)
+- **Military Base Overlays** — 29 Iranian military sites + 20 US/Coalition bases with independent layer toggles
+- **Event Type Filtering** — Clickable legend filters by airstrikes, shelling, ground combat, satellite detections, and more
+- **News Feed Panel** — Live headlines from OSINT sources; click any headline to fly to its geolocated position on the map
+- **Resizable Side Panel** — Drag to resize the info/news panel to your preference
+- **Collapsible Timeline** — Temporal density visualization showing event concentration over time; expand/collapse as needed
+- **Mobile-Responsive** — Full mobile support with a 5-tab bottom navigation bar (Map, Theaters, Filters, News, Timeline)
+
+### Dashboard Data Sources
+
+| Source | Events | Coverage | Description |
+|--------|--------|----------|-------------|
+| **ACLED** | 48,000+ | Oct 7, 2023 – Feb 2025 | Analyst-verified conflict events with lat/lon, actors, fatalities, event types |
+| **OSINT** | 50 unique | Real-time | Curated events from 80+ Telegram, Twitter, and RSS sources |
+| **NASA FIRMS** | 379 | Satellite pass intervals | Satellite fire/thermal anomaly detections across the region |
+| **Pikud HaOref** | Live | Real-time | Israeli Home Front Command siren alerts |
+
+### Screenshots
+
+> _Screenshots coming soon. The dashboard is live at the URL above._
+
+---
+
+## Quick Start
+
+### 1. Prerequisites
+
+- **Python 3.9+** with `Pillow` (`pip3 install Pillow`)
+- **bash**, **curl**, **jq**
+- A **Telegram bot** ([create via @BotFather](https://t.me/BotFather))
+- A **Telegram channel** (add your bot as admin)
+
+### 2. Configure
+
+```bash
+cp config.example.json config.json
+```
+
+Edit `config.json`:
+
+```json
+{
+  "telegram_bot_token": "YOUR_BOT_TOKEN",
+  "telegram_chat_id": "@your_channel",
+  "timezone": "Asia/Jerusalem",
+  "outputs": [
+    {
+      "id": "main",
+      "chat_id": "@your_english_channel",
+      "language": "en",
+      "timezone": "America/New_York",
+      "content": ["all"],
+      "images": "all"
+    },
+    {
+      "id": "hebrew",
+      "chat_id": "@your_hebrew_channel",
+      "language": "he",
+      "timezone": "Asia/Jerusalem",
+      "content": ["all"],
+      "images": "high_only"
+    }
+  ]
+}
+```
+
+### 3. NASA FIRMS API Key (free, 30 seconds)
+
+Fire detection needs a free NASA FIRMS MAP_KEY — no verification required.
+
+1. Go to [mail.tm](https://mail.tm) or any temp email service
+2. Copy the temp email address
+3. Go to [FIRMS API](https://firms.modaps.eosdis.nasa.gov/api/area/) → **Get MAP_KEY**
+4. Enter the email — key arrives instantly
+5. Save it:
+   ```bash
+   mkdir -p secrets
+   echo "YOUR_KEY" > secrets/firms-map-key.txt
+   ```
+
+The key is permanent with no rate limits.
+
+### 4. Run
+
+```bash
+# One-time check (stdout)
+bash ctl.sh check
+
+# Start real-time watcher daemon
+bash ctl.sh start
+
+# Full dashboard
+bash ctl.sh dashboard
+
+# Stop
+bash ctl.sh stop
+```
+
+### 🐳 Docker (Recommended for Cloud/Self-Hosting)
+
+```bash
+# Option A: Quick start with env vars
+cp .env.example .env
+# Edit .env with your Telegram bot token + channel IDs
+
+docker compose up -d
+
+# View logs
+docker compose logs -f
+
+# Stop
+docker compose down
+```
+
+```bash
+# Option B: Use your own config.json
+docker build -t iran-israel-watcher .
+docker run -d --name watcher \
+  -v ./config.json:/app/config.json:ro \
+  -v ./secrets:/app/secrets:ro \
+  -v watcher-state:/app/state \
+  iran-israel-watcher
+```
+
+```bash
+# One-shot SITREP (without starting daemon)
+docker run --rm --env-file .env iran-israel-watcher bash ctl.sh check
+```
+
+**Environment variables** (see `.env.example`):
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `TELEGRAM_BOT_TOKEN` | ✅ | Telegram bot token from @BotFather |
+| `TELEGRAM_CHAT_ID` | ✅ | English channel (e.g., `@mychannel`) |
+| `TELEGRAM_CHAT_ID_HE` | | Hebrew channel (optional) |
+| `NORD_USER` / `NORD_PASS` | | NordVPN creds for Israel proxy (Pikud HaOref) |
+| `FIRMS_MAP_KEY` | | NASA FIRMS API key for fire detection |
+| `PUSH_API_KEY` | | Cloud API push endpoint key |
+| `API_URL` | | Cloud API URL for push endpoints |
+| `TIMEZONE` | | Display timezone (default: `Asia/Jerusalem`) |
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────────┐
+│              Real-Time Watcher (daemon)                    │
+│                                                            │
+│  🚨 Oref sirens        every 10-30s (threat-adaptive)     │
+│  📡 OSINT scanner       every 30s-5min                     │
+│    ├─ 📢 10 Telegram channels (t.me/s/ web preview)       │
+│    ├─ 🐦 11 Twitter accounts (syndication API)             │
+│    ├─ 📰 7 RSS feeds (TOI, JPost, AJ, TASS, Ynet,        │
+│    │      Reuters, AP News via Google News proxy)          │
+│    └─ 🌍 USGS seismic (Iran region, M3.5+)                │
+│  📊 Polymarket          every 60s-5min                     │
+│  🔥 NASA FIRMS fires    every 3-15min                      │
+│  🌐 Iran internet       every 5-30min (blackout detect)   │
+│  ✈️ Military flights     every 5-30min (ADS-B)            │
+│  🛡️ Cyber warfare       every 5-30min                     │
+│    ├─ 📢 25 hacktivist TG handles (19 groups)             │
+│    ├─ 🐦 8 CTI Twitter accounts                            │
+│    └─ 📰 4 dark web / breach RSS feeds                     │
+│  🚢 Naval tracking      every 5-30min (AIS)               │
+│  ⚔️ Strikes map data     every 6h (ACLED + local sensors)  │
+│  🎯 Strike correlation  after fire/seismic scans          │
+│  📌 Pinned status       edited every 60s (live dashboard) │
+│                                                            │
+│  → dispatch.py routes to EN + HE channels                  │
+│  → Breaking news corroboration (3+ reputable = CONFIRMED)  │
+│  → Auto-escalate/deescalate threat level                   │
+│  → Per-channel timezones (EN=ET, HE=IST)                   │
+└──────────────────┬─────────────────────────────────────────┘
+                   │
+┌──────────────────▼─────────────────────────────────────────┐
+│              Hourly Reports (cron)                          │
+│  🗺️ Intel map + ✈️ Flight map + 🇮🇱 Hebrew + 🇺🇸 English   │
+│  🎬 24h time-lapse GIF                                     │
+└──────────────────┬─────────────────────────────────────────┘
+                   │
+          dispatch.py (multi-output router)
+           ├─ 🇺🇸 English Channel (ET timestamps)
+           └─ 🇮🇱 Hebrew Channel (IST timestamps)
+```
+
+## Multi-Channel Dispatch
+
+The `dispatch.py` module routes every alert to multiple Telegram channels based on configurable rules:
+
+```json
+{
+  "outputs": [
+    {
+      "id": "main",
+      "chat_id": "@english_channel",
+      "language": "en",
+      "content": ["all"],
+      "min_severity": "LOW",
+      "images": "all"
+    },
+    {
+      "id": "hebrew",
+      "chat_id": "@hebrew_channel",
+      "language": "he",
+      "content": ["siren", "breaking_news", "osint", "fires"],
+      "min_severity": "LOW",
+      "images": "high_only"
+    }
+  ]
+}
+```
+
+### Output Options
+
+| Field | Values | Description |
+|-------|--------|-------------|
+| `language` | `"en"`, `"he"`, `"both"` | Which language text to send |
+| `timezone` | IANA tz string | Timestamps for this output (e.g. `"America/New_York"`) |
+| `content` | `["all"]` or specific types | Event type filter |
+| `min_severity` | `"LOW"` to `"CRITICAL"` | Minimum severity to send |
+| `images` | `"all"`, `"high_only"`, `"critical_only"`, `"none"` | Image inclusion policy |
+
+### Event Types
+
+`siren`, `siren_standdown`, `siren_clear`, `breaking_news`, `threat_change`, `osint`, `fires`, `seismic`, `strike_correlation`, `blackout`, `military_flights`, `polymarket`, `map`, `flight_map`, `summary_he`, `summary_en`, `timelapse`, `pinned_status`
+
+### Usage from Python
+
+```python
+from dispatch import Dispatcher
+d = Dispatcher("config.json")
+d.emit("breaking_news", "CRITICAL",
+       text_he="🚨 חדשות חדשותיות...",
+       text_en="🚨 Breaking news...")
+```
+
+### Usage from Bash
+
+```bash
+echo '{"type":"fires","severity":"HIGH","text_en":"🔥 3 new fires...","text_he":"🔥 3 שריפות חדשות..."}' \
+  | python3 scripts/dispatch.py config.json
+```
+
+## Breaking News Detection
+
+The OSINT scanner automatically detects breaking news by matching **topic triggers** against **credibility signals**:
+
+### How It Works
+
+1. **Topic match** — Text contains a high-value phrase (e.g., "Khamenei killed", "nuclear detonation")
+2. **Credibility check** — Source is credible OR text contains credible attribution
+3. Both must match → alert is flagged `breaking: true` with topic
+
+### Credible Sources
+
+Reuters, AP News, IDF Official, Kan News, Flash News IL, Iran International, BBC Persian, Aharonovic, BeholdIsrael, SentDefender, IsraelRadar
+
+### Credible Attribution Keywords
+
+Netanyahu, Biden, Trump, IDF confirms, Pentagon confirms, Reuters, Associated Press, AFP, BBC confirms, "official statement"
+
+### Topic Categories
+
+- **Leader elimination** — Khamenei, Nasrallah, Sinwar (Hebrew + English variants)
+- **Nuclear events** — Nuclear detonation, nuclear strike, nuclear bomb
+- **Compound matching** — Words appearing anywhere in text (e.g., "khamenei" + "dead")
+
+### Multi-Source Corroboration
+
+Breaking news alerts are tracked per topic. When **3+ reputable sources** report the same topic within a 2-hour window, the alert upgrades from UNVERIFIED to **CONFIRMED**:
+
+| Sources | Status | Display |
+|---------|--------|---------|
+| 1-2 | ⚠️ UNVERIFIED | "2 sources so far, awaiting confirmation" |
+| 3+ reputable | ✅ CONFIRMED | "Confirmed — reported by 3 reputable sources" + source list |
+
+**Reputable sources** (30+): Reuters, AP, BBC, CNN, Times of Israel, Ynet, Haaretz, Jerusalem Post, Al Jazeera, Sky News, France24, NY Times, Washington Post, plus trusted OSINT accounts (SentDefender, IntelPoint, Aurora Intel, etc.)
+
+**How it works:**
+1. Each breaking alert registers its source in `state/breaking-corroboration.json`
+2. Same source doesn't count twice (deduplication by outlet)
+3. Entries expire after 2 hours
+4. Header changes: "BREAKING NEWS" → "CONFIRMED" (EN) / "ידיעה חדשותית דחופה" → "ידיעה מאומתת" (HE)
+
+## OSINT Sources (85+ channels)
+
+### Telegram OSINT Channels (10)
+| Channel | Description |
+|---------|-------------|
+| `warmonitors` | War Monitors — fastest English breaking |
+| `intelslava` | Intel Slava Z — military OSINT |
+| `liveuamap` | Liveuamap — mapped conflict updates |
+| `AbuAliExpress` | Abu Ali Express — Hebrew OSINT king |
+| `flash_news_il` | Flash News IL — Hebrew breaking |
+| `idfonline` | IDF Official |
+| `iranintl_en` | Iran International English |
+| `BBCPersian` | BBC Persian |
+| `kann_news` | Kan News (Israeli public broadcasting) |
+| `aharonyediot` | Aharon Yediot — HIGH reliability Hebrew OSINT |
+
+### Twitter Accounts (11)
+`@PenPizzaReport` · `@Conflict_Radar` · `@Worldsource24` · `@sentdefender` · `@beholdisrael` · `@Osint613` · `@Osinttechnical` · `@IsraelRadar_` · `@Intel_Sky` · `@ELINTNews` · `@IsraelWarRoom`
+
+### RSS Feeds (7)
+| Feed | URL |
+|------|-----|
+| Times of Israel | Direct RSS |
+| Jerusalem Post | Direct RSS |
+| Al Jazeera | Direct RSS |
+| TASS | Direct RSS |
+| Ynet (Hebrew) | Direct RSS |
+| **Reuters** | Google News RSS proxy (`site:reuters.com`) |
+| **AP News** | Google News RSS proxy (`site:apnews.com`) |
+
+> **Note:** Reuters and AP direct RSS feeds are behind Cloudflare/paywalls. We use Google News RSS search filtered to `site:reuters.com` and `site:apnews.com` as a reliable proxy. Items include `<source>` tags for attribution.
+
+### Keyword Filtering (56 terms)
+
+Hebrew + English keywords covering: military operations, weapons systems, political leaders, nuclear facilities (Natanz, Fordow), defense systems (Iron Dome, Arrow, David's Sling, THAAD), and key figures (Khamenei/חמינאי).
+
+## 🔥 NASA FIRMS Satellite Fire Detection
+
+4 NASA satellites monitor thermal anomalies across Iran to detect fires, explosions, and bombing near military/nuclear sites.
+
+### Satellites
+- **VIIRS SNPP** — 375m resolution
+- **VIIRS NOAA-20** — Joint Polar Satellite System
+- **VIIRS NOAA-21** — Latest generation
+- **MODIS** — Terra/Aqua (1km resolution, highest coverage)
+
+### Features
+- Point-in-polygon Iran filtering (excludes neighboring countries)
+- FRP-based priority (≥50 MW = HIGH, ≥15 = MEDIUM)
+- Proximity alerts for 23 known nuclear/military/oil sites
+- Reverse geocoding via Nominatim
+- Deduplication with persistent state
+
+### Priority Classification
+| Priority | Trigger |
+|----------|---------|
+| 🚨 CRITICAL | Near nuclear site or capital (<30km) |
+| 🔴 HIGH | Near military/oil site (<30km) OR FRP ≥50 MW |
+| 🟡 MEDIUM | FRP ≥15 MW |
+| ⚪ LOW | FRP <15 MW, no nearby sites |
+
+## 🌐 Iran Internet Blackout Detection
+
+Monitors Iran's internet as an early warning signal — Iran has historically cut internet before/during military operations.
+
+### Sources
+1. **IODA (Georgia Tech)** — BGP, active probing, Google traffic data for Iran ASNs
+2. **Direct probes** — HTTP pings to irna.ir, president.ir, mehrnews.com with latency tracking
+
+### Assessment Levels
+| Level | Score | Description |
+|-------|-------|-------------|
+| 🟢 NORMAL | 0-9 | Operating normally |
+| 🟠 MINOR_ISSUES | 10-24 | Some fluctuations |
+| 🟡 DEGRADED | 25-49 | Significant disruptions — possible throttling |
+| ⚫ BLACKOUT | 50+ | Major outage — internet cut off |
+
+### Features
+- 24h history bar chart in Telegram
+- Visual threat meter (`████░░░░░░░░░░░░░░░░ 20/100`)
+- Probe latency per Iranian site (with labels: state news, presidency, etc.)
+- Max once/hour alerts (15 min for BLACKOUT)
+- Intelligence signal: NORMAL during strikes = possible loss of command authority
+
+## 🎯 Strike Correlation Engine
+
+Automatically correlates fire + seismic events to detect kinetic strikes. When a fire and earthquake occur within **50km and 30 minutes**, it's flagged as a possible strike.
+
+### Confidence Scoring
+| Factor | Score |
+|--------|-------|
+| Distance <10km | +0.3 |
+| Distance 10-30km | +0.2 |
+| Time <10min | +0.3 |
+| Near known site | +0.2 |
+| Base | +0.1 |
+
+## ✈️ Military Flight Tracking
+
+### ADS-B Monitoring (OpenSky)
+- Coverage: lat 20-42, lon 40-65 (full ME region)
+- Classified by callsign prefix: RCH (airlift), DUKE (ISR), DOOM (bomber), SHELL (tanker), SNTRY (C2)
+- US/Israeli military only — filters out Saudi, Omani, RAF, etc.
+
+### Flight Radar Map (FR24)
+- FlightRadar24 public feed (300-400+ aircraft)
+- Dark Palantir-style map with country borders
+- Color-coded: yellow=civil, red=over Iran, green=US/IL military
+- Side intel panel: airport disruptions, military aircraft with role descriptions
+- 50+ aircraft type→role mappings (F-35, B-52, KC-135, RC-135, E-3, etc.)
+- Bilingual captions
+
+### Airport Disruption Monitoring
+Tracks live flight counts for airports in: Iran (30+), Israel (7), Iraq (5), Syria (3), Lebanon (1), Jordan (2)
+
+Status: `[X] CLOSED` (0 flights), `[!] Limited` (<5), `[+] Operating` (5+)
+
+## 🗺️ Intel Map & Time-Lapse GIF
+
+### Intel Map
+- ESRI satellite tile basemap (768x512px)
+- Iran highlighted with gold border
+- Fire dots color-coded by priority, sized by FRP
+- Earthquake ring markers with magnitude labels
+- 23 known sites marked (Natanz, Fordow, Isfahan, etc.)
+- Auto-generated on every fire/seismic alert
+
+### 24h Time-Lapse GIF
+- Animated fire + seismic progression over 24 hours
+- Known sites marked, fire dots animate chronologically
+- Progress bar + timestamp + event counter
+- 36 frames with variable pacing
+
+## Adaptive Threat-Level System
+
+| Level | Hebrew | Trigger | Oref | OSINT | Fires | Intel |
+|-------|--------|---------|------|-------|-------|-------|
+| 🟢 GREEN | שגרה | No sirens >30min | 30s | 5min | 15min | 30min |
+| 🟡 ELEVATED | מוגבר | Sirens <30min ago | 15s | 2min | 10min | 15min |
+| 🔴 HIGH | גבוה | Active sirens NOW | 10s | 60s | 5min | 10min |
+| ⚫ CRITICAL | קריטי | Major cities | 10s | 30s | 3min | 5min |
+
+All threat levels, threat change alerts, and transition reasons are displayed in Hebrew on the Hebrew channel (e.g., "רמת איום: מוגבר" instead of "THREAT LEVEL: ELEVATED").
+
+Major cities: תל אביב, ירושלים, חיפה, באר שבע, and 13 more.
+
+### Pikud HaOref Stand-Down Detection
+- THREAT alerts (cat 1-7: missiles, rockets, UAVs) → escalate
+- STANDDOWN alerts ("ניתן לצאת מהמרחב המוגן") → informational message, NO escalation
+- 5-minute throttle on standdown messages
+
+## 📌 Live Pinned Status Dashboard
+
+Single Telegram message edited every 60s with:
+- Current threat level with visual bar
+- System status (all monitoring sources)
+- Iran Watch: tracked fires, quakes, nuclear sites
+- Scan frequencies by threat level
+- Separate Hebrew/English versions with proper RTL formatting
+
+## Hourly Reports
+
+5-part automated report sent every hour:
+
+1. 🗺️ **Intel Map** — Satellite map with fires, quakes, borders
+2. ✈️ **Flight Radar Map** — Air traffic + military tracker
+3. 🇮🇱 **Hebrew Summary** — Confident Israeli analyst style
+4. 🇺🇸 **English Summary** — Professional analyst with personality
+5. 🎬 **24h Time-Lapse GIF** — Animated progression
+
+Summary personality adapts by threat level: CRITICAL=empowering, HIGH=confident, normal=chill, quiet=relaxed.
+
+## `ctl.sh` Commands
+
+| Command | Description |
+|---------|-------------|
+| `start` | Start real-time watcher daemon |
+| `stop` | Stop watcher |
+| `status` | Show watcher state, cron, last threat level |
+| `dashboard` | Full dashboard: processes, state, logs, resources |
+| `check` | One-time full check (JSON to stdout) |
+| `post` | Full check → format → post to Telegram |
+| `log [N]` | Show last N lines of watcher log |
+| `rotate` | Force log rotation |
+| `install-launchd` | Auto-start on boot (macOS) |
+| `teardown` | 🛑 Kill everything |
+
+## Pikud HaOref — Israeli IP Required
+
+The Oref siren API is geo-restricted to Israeli IPs:
+
+```bash
+mkdir -p secrets
+
+# Option A: NordVPN service credentials
+printf "USERNAME\nPASSWORD" > secrets/nordvpn-auth.txt
+
+# Option B: Any HTTPS/SOCKS5 proxy
+echo "https://user:pass@host:port" > secrets/proxy-override.txt
+
+# Option C: SSH tunnel to Israeli VPS
+ssh -D 1080 user@your-server
+echo "socks5://localhost:1080" > secrets/proxy-override.txt
+```
+
+No Israeli IP? You lose siren data but keep everything else.
+
+## Wire Service Integration (Reuters/AP)
+
+Direct Reuters and AP News RSS feeds are behind Cloudflare/paywalls. We use **Google News RSS** as a proxy:
+
+```
+# Reuters (Iran+Israel filtered)
+https://news.google.com/rss/search?q=site:reuters.com+iran+OR+israel&hl=en-US&gl=US&ceid=US:en
+
+# AP News (Iran+Israel filtered)
+https://news.google.com/rss/search?q=site:apnews.com+iran+OR+israel&hl=en-US&gl=US&ceid=US:en
+```
+
+- Items include `<source>` tags identifying Reuters/AP origin
+- Both are treated as **credible sources** — alerts skip "UNVERIFIED" label
+- Works reliably, returns dozens of items per feed
+
+## ⚔️ Strikes Map
+
+Comprehensive geolocated strikes database covering the entire Middle East theater since October 7, 2023. Aggregates from multiple source layers and generates a visual map sent with hourly reports.
+
+### Data Sources (layered)
+
+| Layer | Source | Geo Accuracy | Latency | Auth |
+|-------|--------|-------------|---------|------|
+| 1 | **ACLED API** — structured conflict events | High (analyst-verified) | 1-3 days | Free account |
+| 2 | **NASA FIRMS** — satellite fire detections | High (satellite coords) | 3-15 min | MAP_KEY |
+| 3 | **USGS Seismic** — earthquake events | High (seismograph) | Minutes | None |
+| 4 | **Strike Correlation** — fire+seismic fusion | High (multi-sensor) | After scan | None |
+| 5 | **OSINT Text Extraction** — location mentions | Medium (city-level) | Real-time | None |
+
+### ACLED Registration
+
+ACLED (Armed Conflict Location & Event Data Project) provides the gold-standard structured conflict dataset with lat/lon, actors, fatalities, and event type for every recorded event.
+
+**Registration (required, free):**
+1. Go to [acleddata.com/register](https://acleddata.com/register/)
+2. Sign up with email (institutional email recommended for more access)
+3. Accept terms of use (non-commercial, attribution required)
+4. Verify email via confirmation link
+5. Add credentials to `secrets/acled-creds.txt` (line 1: email, line 2: password)
+
+The scanner auto-handles OAuth2 token management (24h access tokens, 14-day refresh tokens).
+
+### Configuration (`config.json → strikes`)
+
+```json
+{
+  "strikes": {
+    "acled_email": "",
+    "acled_password": "",
+    "countries": ["Iran", "Israel", "Lebanon", "Syria", "Iraq", "Yemen", "Palestine", "Saudi Arabia", "Jordan"],
+    "event_types": ["Explosions/Remote violence", "Battles", "Violence against civilians"],
+    "sub_event_types": ["Air/drone strike", "Shelling/artillery/missile attack", "Armed clash", "Attack"],
+    "start_date": "2023-10-07",
+    "window_days": null,
+    "max_events": 50000,
+    "poll_interval_hours": 6,
+    "include_firms": true,
+    "include_seismic": true,
+    "include_correlations": true,
+    "include_osint": true,
+    "min_fatalities": 0,
+    "actor_filter": [],
+    "map_width": 1600,
+    "map_height": 1000,
+    "highlight_recent_hours": 48,
+    "show_legend": true
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `start_date` | War start date — how far back to collect (default: Oct 7, 2023) |
+| `window_days` | If set, overrides `start_date` with rolling N-day window |
+| `countries` | ACLED country names to query |
+| `event_types` | ACLED event type filter |
+| `sub_event_types` | Fine-grained sub-type filter (air/drone strike, shelling, etc.) |
+| `max_events` | API row limit per query (ACLED default cap: 5000) |
+| `poll_interval_hours` | How often to refresh ACLED data |
+| `include_firms` | Overlay NASA FIRMS fire detections |
+| `include_seismic` | Overlay USGS seismic events |
+| `include_correlations` | Overlay fire+seismic strike correlations |
+| `include_osint` | Extract locations from intel-log.jsonl |
+| `min_fatalities` | Minimum fatality filter (0 = all events) |
+| `actor_filter` | Filter by actor name (empty = all); e.g., `["Israel", "Iran"]` |
+| `highlight_recent_hours` | Yellow outline on events from last N hours |
+
+### Map Visual
+
+- **Dark themed** with country outlines and grid
+- **Color-coded by actor side:** 🔵 Israel, 🔴 Iran, 🟠 Iran proxies, 🔵 US, ⚪ Unknown
+- **Shape by event type:** ● Airstrike, ◆ Missile/Shelling, ▲ Ground combat, ✚ Satellite, ○ Seismic
+- **Size scaled by fatalities**
+- **Opacity by confidence:** solid (high), semi-transparent (medium), faint (low)
+- **Yellow outline:** events from last 48h (configurable)
+- **Legend:** actor breakdown, total events, fatalities, date range
+
+### Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scan_strikes.py` | Data aggregation — ACLED API + local sensors → `strikes-data.json` |
+| `generate-strikes-map.py` | Map rendering — `strikes-data.json` → `strikes-map.png` |
+
+### Backfill
+
+To force a full data refresh (ignoring poll interval):
+```bash
+python3 scripts/scan_strikes.py config.json state --backfill
+python3 scripts/generate-strikes-map.py config.json state
+```
+
+## 🛡️ Cyber Warfare Monitor
+
+Monitors 19 hacktivist groups (25 TG handles), 8 CTI Twitter accounts, and 4 dark web/breach RSS feeds for Iran-Israel cyber operations. Auto-classifies attacks and dispatches bilingual alerts.
+
+### Hacktivist Groups Monitored
+
+**Pro-Iran / Pro-Palestinian:**
+
+| Group | Affiliation | Threat | Known TTPs |
+|-------|-------------|--------|------------|
+| **Handala Hack** | IRGC-linked | HIGH | Data leak, wiper malware, Telegram hijack |
+| **CyberAv3ngers** | IRGC | CRITICAL | ICS/SCADA attacks, PLC exploits (water, power) |
+| **Moses Staff** | IRGC | HIGH | Data leak, encryption, extortion |
+| **Cyber Toufan** | Iran-linked | HIGH | Hack-and-leak, data destruction |
+| **DieNet** | Pro-Iran | MEDIUM | DDoS (emergency systems, broadcasting) |
+| **Dark Storm Team** | Pro-Palestine/Russia | MEDIUM | DDoS-for-hire |
+| **RipperSec** | Pro-Palestine (Malaysia) | MEDIUM | DDoS, SCADA intrusion |
+| **Cyber Fattah** | Pro-Iran | MEDIUM | Data leak, reconnaissance |
+| **Cyber Islamic Resistance** | Hezbollah-linked | HIGH | ICS recon, surveillance |
+
+**Pro-Israel:**
+
+| Group | Affiliation | Threat | Known TTPs |
+|-------|-------------|--------|------------|
+| **Predatory Sparrow** | Israel-linked | HIGH | ICS destruction (steel mills, gas stations, banks) |
+| **Israeli Elite Force** | Pro-Israel | MEDIUM | Financial systems, data leak |
+
+### CTI Twitter Accounts (8)
+
+`@FalconFeedsio` · `@CyberKnow20` · `@DarkWebInformer` · `@HackManac` · `@MonThreat` · `@cybaboreh` · `@BrettCallow` · `@vaboreh`
+
+### Dark Web / Breach RSS Feeds
+
+- **Darkfeed** — Ransomware victim tracker
+- **CISA Advisories** — US government cybersecurity alerts
+- **The Hacker News** — Cyber news with Iran/Israel filtering
+- **BleepingComputer** — Breach and malware news
+
+### Attack Auto-Classification
+
+| Category | Severity | Trigger Keywords |
+|----------|----------|-----------------|
+| 🏭 ICS/SCADA | CRITICAL | SCADA, PLC, water system, power grid, pipeline |
+| 📂 Data Breach | HIGH | Data leak, database, credentials, source code |
+| 💀 Ransomware/Wiper | HIGH | Ransomware, wiper, encrypted, destroyed |
+| 🕵️ Espionage | HIGH | APT, spyware, backdoor, surveillance |
+| 🌐 DDoS | MEDIUM | DDoS, denial of service, offline |
+| 🎨 Defacement | LOW | Defaced, website hacked |
+
+### Target Detection
+
+Automatically identifies whether Israel 🇮🇱 or Iran 🇮🇷 is being targeted based on text analysis + group affiliation fallback.
+
+### Custom Sources
+
+```json
+{
+  "cyber_telegram_channels": ["my_custom_channel"],
+  "cyber_twitter_accounts": ["my_cti_analyst"],
+  "cyber_rss_feeds": [
+    {"name": "My Feed", "url": "https://...", "type": "cyber_news"}
+  ]
+}
+```
+
+## Project Structure
+
+```
+iran-israel-alerts/
+├── api/                         # Flask Container App code (extracted from Docker image v21)
+│   ├── app.py                   # Flask API server (630 lines)
+│   └── db.py                    # Azure Table Storage ORM (549 lines)
+├── scripts/                     # Collection, processing, and dispatch scripts
+│   ├── realtime-watcher.sh      # Adaptive threat-level daemon
+│   ├── dispatch.py              # Multi-channel alert router
+│   ├── scan-osint.py            # Unified OSINT scanner (TG+X+RSS+seismic)
+│   ├── scan-fires.py            # NASA FIRMS fire scanner
+│   ├── scan-seismic.py          # USGS earthquake scanner
+│   ├── scan-blackout.py         # Iran internet blackout detector
+│   ├── scan-military-flights.py # US military ADS-B tracker
+│   ├── scan-naval.py            # Naval vessel tracker
+│   ├── scan_cyber.py            # Cyber warfare & hacktivist monitor
+│   ├── correlate-strikes.py     # Fire+seismic strike correlation
+│   ├── hourly-brief.sh          # Quick hourly brief generator
+│   ├── hourly-report.sh         # Hourly cron: map+summaries+GIF
+│   ├── generate-*.py            # Map/timelapse/summary generators
+│   ├── format-*.py              # Bilingual formatters
+│   └── ...                      # 30+ scripts total
+├── docs/                        # GitHub Pages site + documentation (dual purpose)
+│   ├── index.html               # Main dashboard
+│   ├── centcom.html             # CENTCOM operations view
+│   ├── hormuz.html              # Strait of Hormuz monitoring
+│   ├── ARCHITECTURE.md          # Full system architecture
+│   ├── TROUBLESHOOTING.md       # Common issues and fixes
+│   └── ...                      # Feeds, icons, data assets
+├── references/                  # Reference data + historical plans
+│   ├── sources.md               # Full source list with ratings
+│   └── borders.geojson          # Country borders (17 countries)
+├── secrets/                     # gitignored, API keys
+├── state/                       # gitignored, runtime state
+├── tests/                       # Dashboard and API tests
+├── ctl.sh                       # Master control script
+├── Dockerfile                   # Container build (API + scripts)
+├── config.example.json          # Template → copy to config.json
+└── README.md                    # This file
+```
+
+## Cron Setup
+
+> ⚠️ **macOS cron PATH**: Add `PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin` as the first line of your crontab. Without it, cron uses system Python (3.9) which lacks Pillow — causing silent failures in map/GIF generation.
+
+```bash
+# First line of crontab:
+PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin
+
+# Hourly report (map + summaries + GIF)
+0 * * * * cd /path/to/iran-israel-alerts && bash scripts/hourly-report.sh
+
+# 2-hour full SITREP
+0 */2 * * * cd /path/to/iran-israel-alerts && bash scripts/post-telegram.sh --force
+
+# OpenClaw cron
+openclaw cron add --name "Iran-Israel Report" --every "2h" --session isolated --timeout-seconds 120 \
+  --message "cd /path/to/iran-israel-alerts && bash scripts/post-telegram.sh --force"
+```
+
+## Safety
+
+⚠️ This system **never says "all clear"**. Only Pikud HaOref (Israel Home Front Command) can authorize leaving shelter. When sirens stop, the system shows "NO NEW ALERTS BROADCASTING" with a warning to follow official instructions.
+
+## License
+
+MIT
+
+## Acknowledgments
+
+- [Pikud HaOref](https://www.oref.org.il/) — Israel Home Front Command
+- [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/) — Satellite fire detection
+- [USGS](https://earthquake.usgs.gov/) — Seismic monitoring
+- [IODA](https://ioda.inetintel.cc.gatech.edu/) — Internet outage detection
+- [OpenSky Network](https://opensky-network.org/) — ADS-B flight tracking
+- [FlightRadar24](https://www.flightradar24.com/) — Air traffic data
+- [Polymarket](https://polymarket.com/) — Prediction markets
+- [Google News RSS](https://news.google.com/) — Wire service proxy for Reuters/AP
+- [ACLED](https://acleddata.com/) — Armed Conflict Location & Event Data Project
+- [Leaflet](https://leafletjs.com/) — Interactive map framework
+- OSINT community on X/Twitter and Telegram
