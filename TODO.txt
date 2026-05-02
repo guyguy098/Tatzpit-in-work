@@ -1,0 +1,211 @@
+Done			// after choosing a custom layout, hide the channel selection
+NO			// after selection the channels in custom selection - and click "apply layout"- play these videos
+NO			// add a button to stop loading videos
+Done			// add layout for mobile phones. (1/4 channels by selection)
+Done			// תחזית ירח
+Done			// תחזית ים\גלים
+Done			// תחזית רוח
+Done			// להוסיף מפה אינטרקטיבית של לוויניי סטארלינק https://satellitemap.space/
+Done			// להוסיף מפת קרינה
+				https://www.gmcmap.com/
+				https://map.safecast.org/?y=32.51&x=52.57&z=6&l=0&m=0
+				https://radmon.org/index.php
+Done			// להוסיף אתר פולימרקט https://polymarket.com/
+Done			// להוסיף צבעים לאתרי חדשות (כמו בתפריט השני)
+Done			// add an online translator (like with adi)
+Done			// Palestine Mubasher
+				https://pbc.furrera.ps/palestinelivehd/index.m3u8
+Done			// Palestine Satelite channel
+				https://pbc.furrera.ps/palestinehd/index.m3u8
+Done			// CNN International
+				https://turnerlive.warnermediacdn.com/hls/live/586497/cnngo/cnni/VIDEO_0_3564000.m3u8
+Done			// לינק לאתר שכשהמשתמש מחפש "מילת חיפוש מסויימת" אתר הAI מוציא לו את כל האיזכורים של הנושא שהקליד מכל אתרי החדשות
+Done			// לתקן את כל הלינקים
+NO			// active streams & bandwidth are not working when loading the site
+Done			// divide all channels by country/terror organization support
+Done			// sort all links by A-Z
+NO			// watch videos through VPN
+Done			// check which sites use the AI SUMMARY 
+Done			// list all terror operated tv channels
+Done			// enlarge the drop down menus in main menu
+Done			// add https://www.idf.il/ site to news sites
+NO			// how to know how many rocket were fired in real time?
+NO			// is bandwidth display real values?
+Done			// when playing a video and pausing and then scrolling down, the purple play picture is not displayed on the player like when playing a video and then scrolling down
+Done			// סטטיסטיקה על נפילות הטילים
+Done			// on iPhone there are no screenshot for each on the players
+Done			// get the map from https://www.mako.co.il/news-military/Israel_iran_war/Article-f841a61b945ac91027.htm
+Done			// get the map from https://www.mako.co.il/news-specials/data_n12/Article-42dc9c9ee73ac91026.htm
+Done			// delete Simaye azadi tv stream
+Done			// delete Irinn tv stream
+Done			// delete SNN tv stream
+Done			// delete alhurra tv stream
+Done			// some of the "News sites" links dont work
+Done			// דף עם כל הטילים של אירן 
+Done			// check Al-Quds tv stream
+Done			// add iran attacks on other countries and what kind of attack and which weapons did they use
+Done			// לתקן את הטילים של חיזבאללה וחמאס
+Done			// Add "sort by name" to missiles
+Done			// Change the missiles so the page will load and user can change between tabs of Iran, Hezbollah, Hamas
+Done			// check who is guided and how?
+NO			// add realtime alert from TZOFAR
+NO			// אפשרות למסך מלא לכמה פליירים (לדוגמא, בחירה של 4 פליירים שיוצגו על כל המסך)
+Done			// add maps:
+Done				// https://acleddata.com/monitor/ukraine-conflict-monitor
+Done				// https://www.info-res.org/eyes-on-russia/maps/eyes-on-russia-map/
+Done				// https://storymaps.arcgis.com/stories/089bc1a2fe684405a67d67f13bd31324
+Done				// https://liveuamap.com/
+Done				// https://deepstatemap.live/en#6/49.4395570/32.0471191
+Done				// https://storymaps.arcgis.com/stories/36a7f6a6f5a9448496de641cf64bd375
+Done			// Remove "Traffic saved:"
+Done			// add drones from https://www.mako.co.il/news-military/2026_q1/Article-00254202b24ac91026.htm?Partner=searchResults
+Done			// find all bugs in this site & wrong way the code was written
+Done			// add translation to the "Arsenal" pages
+Done			// "Iran attacks since..." - make the dotted lines more visible
+NO			// קישור ללוח שנה של מחבלים
+Done			// Click on a flag icon on the top title to unselect an area of videos- make the button have a "hover" GUI in iphone (its because of the touch)
+Done			// Change all titles (of other pages" to gradient
+Done			// can the button be gradient to upper left?
+Done			// Enlarnge "Iran" & "Hezbollah" tabs font
+Done			// No scroll after opening main menu
+Done			// make all pages fullscreen (AI summary...)
+Done			// in "Israel alert analytics" page: remove "Today VS Yesterday" graph
+Done			// in "Israel alert analytics" page: remove "Threat Diversity Per Event"
+Done			// in "Israel alert analytics" page: remove "Dataset Coverage" and write it on top of the page
+Done			// in "Israel alert analytics" page: remove "Attack Pattern by Day of Week"
+Done			// in "Israel alert analytics" page: remove "Drills vs Real"
+Done			// Tzevaadom.co.il does not keep history of 4 days - data before 9 MAR 2026 is not available
+Done			// Check integrity of data in "Israel alert analytics"
+
+
+-----======Nice to have=====-----
+// online translation (subtitles) of streaming videos
+
+-----======Mast have=====-----
+// the Israel alert analytics display on iphone exceeds the iPhone screen
+// Check every page on iphone
+// לערוך את סטטיסטיקה על נפילות הטילים
+// Check integrity of data in "Iran attacks since..."
+// הציגי דירוג של הערים עם הכי הרבה אזעקות מאתמול
+// make sure non of that data is hardcoded, but everything is realtime data
+// Live street cameras from Tel Aviv, Haifa, Teheran
+// זמני תפילה לפי עזה, לבנון, חותים, איראן   https://www.webcal.guru/he-IL/%D7%A8%D7%A9%D7%99%D7%9E%D7%AA_%D7%90%D7%99%D7%A8%D7%95%D7%A2%D7%99%D7%9D/personal_prayer_times_islam
+https://www.islamicfinder.org/world/iran/#google_vignette
+
+// graph of twitter activity
+// graph of facebook activity
+// graph of TruthSocial activity
+// Events as timeline
+// Add Polymarket bets on issues related to Iran, USA, Israel, Strike, War, Oil, Bitcoin, Gold...
+// Add Marine Traffic map
+// Add AirNav radar
+// Add 2 maps, left earthquakes, right google maps, when hovering one it moves the other one as well
+// Add Markets: West tex. Oil, Brent, S&P, Nasdaq, Dow, VIX(VX), Dollar, Chineese money, Gold, Euro, Bitcoin
+// Add clocks: Israel, USA, Iran, Lebanon
+
+// Add special people and what they tweet
+// Add iran currency
+// Add counter how many days for last operation (28/3/2026)
+// Add how many countries are involved in the war & were attacked
+// Add how many wounded, Killed in israel & how many in iran
+// Add maps of nuclear sites in iran
+// News resources: https://www.csis.org/
+// Polymarket URL Slug: https://volter-polymarket.fly.dev/
+// All sites under "Intelligence" in https://www.defconlevel.com/financial-alerts
+// Map: https://earth.google.com/web
+// Marine maps: https://www.marinetraffic.com/en/ais/home/centerx:56.3/centery:26.6/zoom:9
+// Flight radar24 map: https://www.flightradar24.com/34.00,36.33/7
+// Iran https://iran.liveuamap.com/
+// tzeva adom heatmap from 2020: https://www.mako.co.il/news-specials/data_n12/Article-3f2ec38e98b1d91027.htm
+// Alerts by day hour: https://www.mako.co.il/news-specials/data_n12/Article-afb5ed124cebc91026.htm
+// Ai summary - display most important news on the news ticker
+// Fires: https://firms.modaps.eosdis.nasa.gov/map/#d:today;@50.3,31.5,7.9z
+// news: https://www.kore.co.il/
+// news: https://kula.co.il/
+// in "Israel alert analytics" page: add option to select a city and display how many alerts
+Done			// in "Israel alert analytics" page: display heatmap map of each day
+No			// in "Israel alert analytics" page: fix "IDF Spokesperson — Recent Intercept Reports"
+// in "Israel alert analytics" page: what else analysis can you suggest to do?
+// in "Israel alert analytics" page: add filter for 1.from 7/10/2023 2. from 28/2/2026
+// verify "Israel alert analytics" page display all data from 28/2/2026
+// add if is there an arab holidy now or next week
+// Earthquakes: https://www.emsc-csem.org/Earthquake_map/
+// Earthquakes: https://www.iris.edu/app/seismic-monitor/map?lat=32.8982&lng=51.1089&zoom=7
+// Earthquakes: https://earth3dmap.com/earthquake-live-map/
+// Earthquakes: https://earthquakes.berkeley.edu/seismo.real.time.map.html
+// moon: https://quickmap.lroc.im-ldi.com/?prjExtent=-215928.1225656%2C338280.3861286%2C1229469.4773284%2C1037196.1045487&stack=3314&proj=10&defs=N4IgzGCMAsIFygPYAcCGBjAlgFwJ70gF9Cg
+// day on map: https://www.timeanddate.com/astronomy/moon/light.html
+// Air quality: https://www.iqair.com/air-quality-map?lat=32.0956&lng=34.9566&zoomLevel=10
+https://www.windy.com/?51.739,15.570,4,p:wind
+https://www.marinetraffic.com/en/ais/home/centerx:56.1/centery:25.8/zoom:8
+https://www.ventusky.com/#p=34.8;52.1;4&t=20260405/2200
+https://www.iris.edu/app/seismic-monitor/map?lat=30.8183&lng=49.8717&zoom=8
+https://jonkwiatkowski.github.io/Leaflet/
+https://redalerts.pages.dev/red-alert/2026-02-28.json/
+https://www.marinetraffic.com/en/ais/embed/zoom:9/centery:26.56/centerx:56.25/maptype:4/shownames:false/mmsi:0/shipid:0/fleet:/fleet_id:/vtypes:/showmenu:/remember:false
+https://www.nytimes.com/live/2026/world/us-israel-iran-attack-maps
+----========https://www.mapchannels.com/dualmaps.aspx========------
+----========https://www.dualmaps.com/========------
+----========https://www.mapchannels.com/AnimatedRouteMaps.aspx========-----
+----========https://www.mapchannels.com/VideoMaps.aspx========-----
+https://maplibre.org/maplibre-gl-js/docs/examples/sync-movement-of-multiple-maps/
+https://dualmaps.eu/?lat=52.782831142&lng=15.292968750&z=6&l=OSM+DE&t=adsb&w=w50
+----========https://maplibre.org/maplibre-gl-js/docs/examples/sky-fog-terrain/========-----
+----========https://github.com/digidem/leaflet-side-by-side========-----
+-----=======https://openridge.netlify.app/========-------
+---------=======https://tour.mapchannels.com/======--------
+"שעון מבצע" תחילת המבצע 28.2.26 08:17
+https://understandingwar.org/research/middle-east/iran-update-special-report-april-5-2026/
+https://he.wikipedia.org/wiki/%D7%90%D7%9E%D7%A6%D7%A2%D7%99_%D7%94%D7%9C%D7%97%D7%99%D7%9E%D7%94_%D7%A9%D7%9C_%D7%97%D7%96%D7%91%D7%90%D7%9C%D7%9C%D7%94
+
+
+
+
+
+
+
+
+
+add an option to draw a trail on the map
+add an option to draw a trail on the map to measure the length of the trail
+add ground-level view of a 3d map from a 1.70m height person. it should be synchronized with the other maps 
+Done			// add - color what terrain is visible on the map from a human point of view (1.7m height) when looking at the 3d map
+NO			// Cesium.js
+Done			// add 3d terrain layer
+add country names layer
+add 3d terrain map but like "terrain" map
+
+
+
+
+
+
+
+
+
+https://www.inss.org.il/he/publication/war-data/
+
+https://www.shual.org.il/FoxClientV3/authentication
+chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://inri.orc.org.il/media/wh5bo1ei/%D7%A9%D7%95%D7%91-%D7%A2%D7%95%D7%A8%D7%A3-%D7%9C%D7%90%D7%95%D7%9E%D7%99-%D7%A9%D7%95%D7%A2%D7%9C.pdf
+
+https://famelack.com/tv/top-news
+
+poly market
+
+https://fortiguard.fortinet.com/threat-map
+https://livethreatmap.radware.com/
+https://cybermap.kaspersky.com/
+
+
+
+
+
+Category	Source/Provider	Type	MapLibre Layer Type
+Wind	maplibre-gl-wind	Particles	Custom/Deck.gl
+Ships	AISStream	WebSocket	symbol / circle
+Flights	OpenSky Network	REST/JSON	symbol (rotated)
+			Buildings	OpenFreeMap	Vector	fill-extrusion
+Terrain	MapTiler RGB	Raster-DEM	hillshade / terrain
+			Nuclear	GPPD GitHub	GeoJSON	symbol
+
+
