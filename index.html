@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+	<meta name="apple-mobile-web-app-capable" content="yes">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tatzpit</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+	<link rel="stylesheet" href="css/main.css">
+	<link rel="stylesheet" href="css/mobile.css">
+	<link rel="stylesheet" href="css/components.css">
+	<link rel="stylesheet" href="css/dropdowns.css">
+	<link rel="stylesheet" href="css/overlays.css">
+	<link rel="stylesheet" href="css/leaflet-fix.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-container">
+				<button class="hamburger-btn-main" onclick="openMobileMenu()">
+					<i class="fas fa-bars"></i>
+				</button>
+				<a href="#" class="logo">Tatzpit</a>
+			</div>
+            
+            <div class="controls">
+                <div class="region-filters">
+					<label class="region-filter active" id="allFilter" onclick="toggleAll(event)">
+						<input type="checkbox" id="allCheckbox" checked>
+						<i class="fas fa-check"></i>
+					</label>
+                    <label class="region-filter active" data-region="arab">
+                        <input type="checkbox" id="arabCheckbox" checked>
+                        <img src="flags/sa.png" alt="Arab">
+                    </label>
+                    <label class="region-filter active" data-region="israel">
+                        <input type="checkbox" id="israelCheckbox" checked>
+                        <img src="flags/il.png" alt="Israel">
+                    </label>
+                    <label class="region-filter active" data-region="usa">
+                        <input type="checkbox" id="usaCheckbox" checked>
+                        <img src="flags/us.png" alt="USA">
+                    </label>
+                    <label class="region-filter active" data-region="iran">
+                        <input type="checkbox" id="iranCheckbox" checked>
+                        <img src="flags/ir.png" alt="Iran">
+                    </label>
+                    <label class="region-filter active" data-region="world">
+                        <input type="checkbox" id="worldCheckbox" checked>
+                        <img src="flags/world.png" alt="World" class="world-icon">
+                    </label>
+					<button class="custom-layout-btn" onclick="showCustomLayout()">
+						<i class="fas fa-pencil"></i>
+					</button>
+                </div>
+                <select class="grid-selector" id="gridSelector">
+                    <option value="grid-1xY">1xY</option>
+					<option value="grid-2xY">2xY</option>
+					<option value="grid-3xY" selected>3xY</option>
+					<option value="grid-4xY">4xY</option>
+					<option value="grid-5xY">5xY</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+	<div class="custom-layout-overlay" id="customLayoutOverlay" onclick="handleOverlayClick(event)">
+		<div class="custom-layout-controls" id="customLayoutControls">
+			<div class="custom-layout-header">
+				<h3>Select Channels (max 6)</h3>
+				<button class="custom-layout-close" onclick="cancelCustomLayout()">×</button>
+			</div>
+			<div class="channel-picker" id="channelPicker">
+				<!-- Channels will be populated by JavaScript -->
+			</div>
+			<div class="custom-controls">
+				<button class="custom-btn" onclick="applyCustomLayout()">Apply Layout</button>
+				<button class="custom-btn" onclick="cancelCustomLayout()">Cancel</button>
+				<button class="custom-btn" onclick="clearSelection()">Clear All</button>
+			</div>
+		</div>
+	</div>
+
+    <div class="stats-bar">
+		<div class="stats-bar-content">
+			<div class="stat-item">
+				<i class="fas fa-play-circle"></i>
+				<span>Active Streams: <span class="stat-value" id="activeStreams">0</span><span style="color: #888;">/</span><span class="stat-value" id="visibleChannels">0</span></span>
+			</div>
+			<div class="stat-item">
+				<i class="fas fa-chart-line"></i>
+				<span>Bandwidth: ~ <span class="stat-value" id="bandwidthUsage">0 Mbps</span></span>
+			</div>
+		</div>
+	</div>
+
+    <main class="main-content">
+        <div class="grid-container grid-3xY" id="gridContainer">
+            <!-- Arab Channels -->
+ 			
+            <div class="video-container" data-region="arab">
+                <div class="video-header">
+                    <div class="video-title">Al Arabiya (Saudi)</div>
+                    <div class="country-badge badge-arab">Arab</div>
+                </div>
+                <video class="video-element" id="video4" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video4', 'https://live.alarabiya.net/alarabiapublish/alarabiya.smil/playlist.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+			<div class="video-container" data-region="arab">
+                <div class="video-header">
+                    <div class="video-title">Al Aqsa (Hamas)</div>
+                    <div class="country-badge badge-arab">Arab</div>
+                </div>
+                <video class="video-element" id="video2" muted preload="none" controls></video>
+				<div class="play-overlay" onclick="playVideo('video2', 'https://mn-nl.mncdn.com/palabroad/live/playlist.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="arab">
+                <div class="video-header">
+                    <div class="video-title">Al Hadath (Saudi)</div>
+                    <div class="country-badge badge-arab">Arab</div>
+                </div>
+                <video class="video-element" id="video7" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video7', 'https://av.alarabiya.net/alarabiapublish/alhadath.smil/playlist.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="arab">
+                <div class="video-header">
+                    <div class="video-title">Al Jazeera (Muslim Brotherhood)</div>
+                    <div class="country-badge badge-arab">Arab</div>
+                </div>
+                <video class="video-element" id="video5" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video5', 'https://live-hls-web-aja.getaj.net/AJA/index.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="arab">
+                <div class="video-header">
+                    <div class="video-title">Al Jazeera Mubasher (Muslim Brotherhood)</div>
+                    <div class="country-badge badge-arab">Arab</div>
+                </div>
+                <video class="video-element" id="video6" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video6', 'https://live-hls-web-ajm.getaj.net/AJM/05.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+			
+			<div class="video-container" data-region="arab">
+                <div class="video-header">
+                    <div class="video-title">Al Manar (Hezbollah)</div>
+                    <div class="country-badge badge-arab">Arab</div>
+                </div>
+                <video class="video-element" id="video1" muted preload="none" controls></video>
+				<div class="play-overlay" onclick="playVideo('video1', 'https://edge.fastpublish.me/live/tracks-v3a1/mono.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+			<div class="video-container" data-region="arab">
+                <div class="video-header">
+                    <div class="video-title">Al Masirah (Houtis)</div>
+                    <div class="country-badge badge-arab">Arab</div>
+                </div>
+                <video class="video-element" id="video14" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video14', 'https://live.cdnbridge.tv/Almasirah/Almasirah_all/Almasirah/Almasirah_360p/chunks.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+			<div class="video-container" data-region="arab">
+                <div class="video-header">
+                    <div class="video-title">Al Mayadeen (Hezbollah/Iran)</div>
+                    <div class="country-badge badge-arab">Arab</div>
+                </div>
+                <video class="video-element" id="video3" muted preload="none" controls></video>
+				<div class="play-overlay" onclick="playVideo('video3', 'https://mdnlv.cdn.octivid.com/almdn/smil:mpegts.stream.smil/chunklist_b2000000.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="arab">
+                <div class="video-header">
+                    <div class="video-title">Jordan TV</div>
+                    <div class="country-badge badge-arab">Arab</div>
+                </div>
+                <video class="video-element" id="video11" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video11', 'https://jrtv-live.ercdn.net/jordanhd/jordanhd_1080p.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+			<div class="video-container" data-region="arab">
+                <div class="video-header">
+                    <div class="video-title">Palestine Mubasher (Fatah)</div>
+                    <div class="country-badge badge-arab">Arab</div>
+                </div>
+                <video class="video-element" id="video9" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video9', 'https://pbc.furrera.ps/palestinelivehd/index.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+			
+			<div class="video-container" data-region="arab">
+                <div class="video-header">
+                    <div class="video-title">Palestine Satelite channel (Fatah)</div>
+                    <div class="country-badge badge-arab">Arab</div>
+                </div>
+                <video class="video-element" id="video10" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video10', 'https://pbc.furrera.ps/palestinehd/index.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="arab">
+                <div class="video-header">
+                    <div class="video-title">Palestine Today (Palestinian Islamic Jihad)</div>
+                    <div class="country-badge badge-arab">Arab</div>
+                </div>
+                <video class="video-element" id="video8" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video8', 'https://live.paltodaytv.com/paltv/live/playlist.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="arab">
+                <div class="video-header">
+                    <div class="video-title">Syria TV</div>
+                    <div class="country-badge badge-arab">Arab</div>
+                </div>
+                <video class="video-element" id="video13" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video13', 'https://svs.itworkscdn.net/syriatvlive/syriatv.smil/playlist_dvr.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="arab">
+                <div class="video-header">
+                    <div class="video-title">Voice of Lebanon</div>
+                    <div class="country-badge badge-arab">Arab</div>
+                </div>
+                <video class="video-element" id="video12" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video12', 'https://svs.itworkscdn.net/vdltvlive/vdltv.smil/playlist.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <!-- Israel Channels -->
+            <div class="video-container" data-region="israel">
+                <div class="video-header">
+                    <div class="video-title">ערוץ 11</div>
+                    <div class="country-badge badge-israel">Israel</div>
+                </div>
+                <video class="video-element" id="video16" muted preload="none" controls></video>
+				<div class="play-overlay" onclick="playVideo('video16', 'https://kancdn.medonecdn.net/livehls/oil/kancdn-live/live/kan11/live.livx/playlist.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="israel">
+                <div class="video-header">
+                    <div class="video-title">ערוץ 12</div>
+                    <div class="country-badge badge-israel">Israel</div>
+                </div>
+                <video class="video-element" id="video17" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video17', 'https://mako-streaming.akamaized.net/stream/hls/live/2033791/k12dvr/profile/2/hdntl=exp=1772475789~acl=%2f*~data=hdntl~hmac=d0ce2f73df34efd894ae97c6775045053117ef9cc891c9215a9d7c977edf1566/profileManifest.m3u8?_uid=c4d2e1d4-3387-429c-9a72-4cd0d9ed07d1&rK=b5&_did=W28081e5d5f974edb55d919af4f40a50b0bd')">
+					<i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="israel">
+                <div class="video-header">
+                    <div class="video-title">ערוץ 13</div>
+                    <div class="country-badge badge-israel">Israel</div>
+                </div>
+                <video class="video-element" id="video18" muted preload="none" controls></video>
+				<div class="play-overlay" onclick="playVideo('video18', 'https://d2xg1g9o5vns8m.cloudfront.net/out/v1/0855d703f7d5436fae6a9c7ce8ca5075/index.m3u8')">
+				<i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="israel">
+                <div class="video-header">
+                    <div class="video-title">ערוץ 14</div>
+                    <div class="country-badge badge-israel">Israel</div>
+                </div>
+                <video class="video-element" id="video19" muted preload="none" controls></video>
+				<div class="play-overlay" onclick="playVideo('video19', 'https://r.il.cdn-redge.media/livehls/oil/ch14/live/ch14/live.livx/playlist.m3u8')">
+					<i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>	
+				
+            <div class="video-container" data-region="israel">
+                <div class="video-header">
+                    <div class="video-title">i24News</div>
+                    <div class="country-badge badge-israel">Israel</div>
+                </div>
+                <video class="video-element" id="video20" muted preload="none" controls></video>
+				<div class="play-overlay" onclick="playVideo('video20', 'https://fastly.live.brightcove.com/6386790215112/eu-central-1/5377161796001/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJob3N0IjoiZXJmajYzLmVncmVzcy53YzQ3bTEiLCJhY2NvdW50X2lkIjoiNTM3NzE2MTc5NjAwMSIsImVobiI6ImZhc3RseS5saXZlLmJyaWdodGNvdmUuY29tIiwiaXNzIjoiYmxpdmUtcGxheWJhY2stc291cmNlLWFwaSIsInN1YiI6InBhdGhtYXB0b2tlbiIsImF1ZCI6WyI1Mzc3MTYxNzk2MDAxIl0sImp0aSI6IjYzODY3OTAyMTUxMTIifQ.8ZawImK7DfcrrXeAT2OVZ62qQJrJiBaoc7Y1DNNq1bg/playlist-hls.m3u8?__nn__=5476555825001&hdnea=st=1767895200~exp=1767898800~acl=/6386790215112/eu-central-1/5377161796001/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJob3N0IjoiZXJmajYzLmVncmVzcy53YzQ3bTEiLCJhY2NvdW50X2lkIjoiNTM3NzE2MTc5NjAwMSIsImVobiI6ImZhc3RseS5saXZlLmJyaWdodGNvdmUuY29tIiwiaXNzIjoiYmxpdmUtcGxheWJhY2stc291cmNlLWFwaSIsInN1YiI6InBhdGhtYXB0b2tlbiIsImF1ZCI6WyI1Mzc3MTYxNzk2MDAxIl0sImp0aSI6IjYzODY3OTAyMTUxMTIifQ.8ZawImK7DfcrrXeAT2OVZ62qQJrJiBaoc7Y1DNNq1bg/*~hmac=59be9c55159d8b6167ec5d5a7528df6b7bf144a4d8fe71dd486a93e5032f20a2')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <!-- USA Channels -->
+            <div class="video-container" data-region="usa">
+                <div class="video-header">
+                    <div class="video-title">ABC News</div>
+                    <div class="country-badge badge-usa">USA</div>
+                </div>
+                <video class="video-element" id="video25" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video25', 'https://live-manifest.production-public.tubi.io/live/14e4f5f2-9787-4c49-8554-f2ad109764a7/playlist.m3u8')">
+					<i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="usa">
+                <div class="video-header">
+                    <div class="video-title">CBS News</div>
+                    <div class="country-badge badge-usa">USA</div>
+                </div>
+                <video class="video-element" id="video26" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video26', 'https://cbsn-us.cbsnstream.cbsnews.com/out/v1/55a8648e8f134e82a470f83d562deeca/master.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+			<div class="video-container" data-region="usa">
+                <div class="video-header">
+                    <div class="video-title">CNN</div>
+                    <div class="country-badge badge-usa">USA</div>
+                </div>
+                <video class="video-element" id="video21" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video21', 'https://turnerlive.warnermediacdn.com/hls/live/586497/cnngo/cnni/VIDEO_0_3564000.m3u8')">
+					<i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="usa">
+                <div class="video-header">
+                    <div class="video-title">FOX News</div>
+                    <div class="country-badge badge-usa">USA</div>
+                </div>
+                <video class="video-element" id="video22" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video22', 'https://247preview.foxnews.com/hls/live/2020027/fncv3preview/primary.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="usa">
+                <div class="video-header">
+                    <div class="video-title">LiveNOW from FOX</div>
+                    <div class="country-badge badge-usa">USA</div>
+                </div>
+                <video class="video-element" id="video23" muted preload="none" controls></video>
+				<div class="play-overlay" onclick="playVideo('video23', 'https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg00488-foxdigital-livenowbyfox-lgus/playlist.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="usa">
+                <div class="video-header">
+                    <div class="video-title">NBC News</div>
+                    <div class="country-badge badge-usa">USA</div>
+                </div>
+                <video class="video-element" id="video24" muted preload="none" controls></video>
+				<div class="play-overlay" onclick="playVideo('video24', 'https://d4ybyqrhce41r.cloudfront.net/v1/master/3fec3e5cac39a52b2132f9c66c83dae043dc17d4/prod-xumo-linear-nbcu-hlsv3/master.m3u8?ads.channelId=99991247')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+
+            <div class="video-container" data-region="usa">
+                <div class="video-header">
+                    <div class="video-title">News12 New York</div>
+                    <div class="country-badge badge-usa">USA</div>
+                </div>
+                <video class="video-element" id="video27" muted preload="none" controls></video>
+				<div class="play-overlay" onclick="playVideo('video27', 'https://wurlnews12ny.global.transmit.live/hls/68c48577268ca4398b084116/v1/alticeusanewsinc_news12newyork_1/lg_us/latest/main/hls/playlist.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="iran">
+                <div class="video-header">
+                    <div class="video-title">Iran-e-Farda TV</div>
+                    <div class="country-badge badge-iran">Iran</div>
+                </div>
+                <video class="video-element" id="video28" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video28', 'https://hls.iranfarda.live/hls/stream.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="iran">
+                <div class="video-header">
+                    <div class="video-title">Iran International</div>
+                    <div class="country-badge badge-iran">Iran</div>
+                </div>
+                <video class="video-element" id="video29" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video29', 'https://dev-live.livetvstream.co.uk/LS-63503-4/index.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+			
+            <div class="video-container" data-region="iran">
+                <div class="video-header">
+                    <div class="video-title">Press TV</div>
+                    <div class="country-badge badge-iran">Iran</div>
+                </div>
+                <video class="video-element" id="video30" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video30', 'https://live.presstv.ir/hls/presstv_5_482/index.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <!-- World Channels -->
+            <div class="video-container" data-region="world">
+                <div class="video-header">
+                    <div class="video-title">BBC (UK)</div>
+                    <div class="country-badge badge-world">World</div>
+                </div>
+                <video class="video-element" id="video31" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video31', 'https://vs-hls-push-ww-live.akamaized.net/x=4/i=urn:bbc:pips:service:bbc_news_channel_hd/t=3840/v=pv14/b=5070016/main.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="world">
+                <div class="video-header">
+                    <div class="video-title">Global News (Canada)</div>
+                    <div class="country-badge badge-world">World</div>
+                </div>
+                <video class="video-element" id="video33" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video33', 'https://live.corusdigitaldev.com/groupd/live/49a91e7f-1023-430f-8d66-561055f3d0f7/live.isml/master.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+
+            <div class="video-container" data-region="world">
+                <div class="video-header">
+                    <div class="video-title">RT News (Russia)</div>
+                    <div class="country-badge badge-world">World</div>
+                </div>
+                <video class="video-element" id="video34" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video34', 'https://rt-glb.rttv.com/live/rtnews/playlist.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+			
+            <div class="video-container" data-region="world">
+                <div class="video-header">
+                    <div class="video-title">Sky News (UK)</div>
+                    <div class="country-badge badge-world">World</div>
+                </div>
+                <video class="video-element" id="video32" muted preload="none" controls></video>
+                <div class="play-overlay" onclick="playVideo('video32', 'https://linear417-gb-hls3-prd-ak.cdn.skycdp.com/100e/Content/HLS_004_1080_30/Live/channel(skynews)/index_1080.m3u8')">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="loading-indicator"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+	<script src="js/config.js"></script>
+	<script src="js/video-player.js"></script>
+	<script src="js/filters.js"></script>
+	<script src="js/custom-layout.js"></script>
+	<script src="js/sidebar.js"></script>
+	<script src="js/app.js"></script>
+	<script src="js/ai-summary.js"></script>
+	<script src="data/alert-history.js"></script>
+	<script src="js/alert-analytics.js"></script>
+	<script src="js/arsenal.js"></script>
+	<script src="data/iran-attacks-data.js"></script>
+	<script src="js/iran-attacks.js"></script>
+	<script src="js/hormuz.js"></script>
+	<script src="js/centcom.js"></script>
+	<script src="js/ios-posters.js"></script>
+
+	<!-- Add this before </body> tag -->
+	<div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="closeMobileMenu()"></div>
+	<div class="mobile-sidebar" id="mobileSidebar" dir="ltr">
+		<div class="mobile-sidebar-header">
+			<button class="hamburger-btn-main" onclick="closeMobileMenu()">
+				<i class="fas fa-bars"></i>
+			</button>
+		</div>
+		<div class="mobile-sidebar-content">
+			<div class="mobile-tool-section">
+				<h4><i class="fas fa-map"></i> War Maps</h4>
+				<div class="custom-dropdown" id="warMapsDropdown">
+					<button class="custom-dropdown-selected" onclick="toggleDropdown('warMapsDropdown')">
+						<span>Select Map...</span>
+						<i class="fas fa-chevron-down"></i>
+					</button>
+					<div class="custom-dropdown-list" id="warMapsDropdown-list">
+						<div class="custom-dropdown-item disabled">Israel war 2026</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://e.infogram.com/66fd30d8-aac7-47e3-be4f-62fe8dc46bf2?parent_url=https%3A%2F%2Fwww.mako.co.il%2Fnews-specials%2Fdata_n12%2FArticle-42dc9c9ee73ac91026.htm&src=embed#async_embed', 'warMapsDropdown')">🎯 Iran Strikes (Israel & US)</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://e.infogram.com/9558c27e-2622-4277-98d1-6b5623d78ac8?parent_url=https%3A%2F%2Fwww.mako.co.il%2Fnews-military%2FIsrael_iran_war%2FArticle-f841a61b945ac91027.htm&amp;src=embed#async_embed', 'warMapsDropdown')">🎯 Alarms by city</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://iranwarmap.com/', 'warMapsDropdown')">🎯 Iran war map *****</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://storymaps.arcgis.com/stories/089bc1a2fe684405a67d67f13bd31324', 'warMapsDropdown')">🎯 Story maps</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://live-iran-map.com/map', 'warMapsDropdown')">🎯 Conflict tracker *****</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">Military Deployment</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://experience.arcgis.com/experience/6893435f0297454a988ad2e6bf474a7b', 'warMapsDropdown')">🪖 Centcom - Middle East</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">Skies</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.flightradar24.com/34.00,36.33/7', 'warMapsDropdown')">✈️ Flight Radar 24</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.mooncalc.org/#/51.5071,14.5886,3/2026.02.22/03:19/1/3', 'warMapsDropdown')">🌕 Moon Calculator</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://starwalk.space/en/moon-calendar', 'warMapsDropdown')">🌕 Starwalk Moon</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://satellitemap.space/', 'warMapsDropdown')">🛰️ StarLink</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.ventusky.com/#p=37.6;32.5;4', 'warMapsDropdown')">🌧️ Ventusky</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.windy.com/?38.150,30.863,4,p:wind', 'warMapsDropdown')">🌨️ Windy</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">Sea</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.marinetraffic.com/en/ais/home/centerx:25.2/centery:36.7/zoom:6', 'warMapsDropdown')">🌊 Marine Traffic</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">Ukraine-Russia</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://acleddata.com/monitor/ukraine-conflict-monitor', 'warMapsDropdown')">🎯 acleddata</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.info-res.org/eyes-on-russia/maps/eyes-on-russia-map/', 'warMapsDropdown')">🎯 eyes-on-russia-map</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://storymaps.arcgis.com/stories/089bc1a2fe684405a67d67f13bd31324', 'warMapsDropdown')">🎯 storymaps.arcgis 1</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://storymaps.arcgis.com/stories/36a7f6a6f5a9448496de641cf64bd375', 'warMapsDropdown')">🎯 storymaps.arcgis 2</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://liveuamap.com/', 'warMapsDropdown')">🎯 liveuamap</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://deepstatemap.live/en#6/49.4395570/32.0471191', 'warMapsDropdown')">🎯 deepstatemap</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">Conflict maps</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://hezbollah.liveuamap.com/', 'warMapsDropdown')">🔴 Hezbollah Map</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://lebanon.liveuamap.com/', 'warMapsDropdown')">🔴 Lebanon Map</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://israelpalestine.liveuamap.com/', 'warMapsDropdown')">🔴 Israel-Palestine Map</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.washingtoninstitute.org/hezbollahinteractivemap/', 'warMapsDropdown')">🔴 Lebanese Hezbollah</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://health.liveuamap.com/en/ukraine', 'warMapsDropdown')">🔴 Ukraine</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://isis.liveuamap.com/', 'warMapsDropdown')">🔴 ISIS Map</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://iran.liveuamap.com/', 'warMapsDropdown')">🔴 Iran Map</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">Hazards</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://eq.gsi.gov.il/heb/earthquake/lastEarthquakes.php', 'warMapsDropdown')">🟤 Earthquakes</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://health.liveuamap.com/en/epidemics', 'warMapsDropdown')">🦠 Epidemics</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.gmcmap.com/', 'warMapsDropdown')">☢️ GMC Map</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://map.safecast.org/?y=32.19&x=44.76&z=7&l=0&m=0', 'warMapsDropdown')">☢️ SafeCast map</div>
+					</div>
+				</div>
+			</div>
+			<div class="mobile-tool-section">
+				<h4><i class="fas fa-newspaper"></i> News Sites</h4>
+				<div class="custom-dropdown" id="newsSitesDropdown">
+					<button class="custom-dropdown-selected" onclick="toggleDropdown('newsSitesDropdown')">
+						<span>Select News Site...</span>
+						<i class="fas fa-chevron-down"></i>
+					</button>
+					<div class="custom-dropdown-list" id="newsSitesDropdown-list">
+						<div class="custom-dropdown-item disabled">🚨 Alerts 🚨</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.tzevaadom.co.il/', 'newsSitesDropdown')">Tzofar - Tzeva Adom</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.oref.org.il/heb', 'newsSitesDropdown')">Pikud Ha-oref</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://tzevadom.com/summary', 'newsSitesDropdown')">Tzofar - Summary</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.oref.org.il/heb/alerts-history', 'newsSitesDropdown')">Pikud Ha-oref history</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://oct7database.com/index.html', 'newsSitesDropdown')">7.10 murdered list</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.tzevaadom.co.il/historical/', 'newsSitesDropdown')">Tzofar - history</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://kula.co.il/war-room', 'newsSitesDropdown')">Kula</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.inss.org.il/he/publication/lions-roar-map/', 'newsSitesDropdown')">INSS lion roar map</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.iris.edu/app/seismic-monitor/map?lat=32.9713&lng=59.4868&zoom=6', 'newsSitesDropdown')">Sage- Sismic monitor - Iran</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://earthquakes.berkeley.edu/seismo.real.time.map.html', 'newsSitesDropdown')">Berkeley- Sismic monitor - Iran</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">🇮🇱 Israeli</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.0404.co.il/', 'newsSitesDropdown')">0404</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.calcalist.co.il', 'newsSitesDropdown')">Calcalist</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.globes.co.il', 'newsSitesDropdown')">Globes</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.haaretz.co.il', 'newsSitesDropdown')">Haaretz</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.i24news.tv/en', 'newsSitesDropdown')">i24News</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.idf.il/', 'newsSitesDropdown')">IDF</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.jpost.com/', 'newsSitesDropdown')">Jerusalem Post</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.mivzaklive.co.il', 'newsSitesDropdown')">Mivzak Live</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.n12.co.il/', 'newsSitesDropdown')">N12</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.nziv.net/', 'newsSitesDropdown')">Nziv.net</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://rotter.net/', 'newsSitesDropdown')">Rotter</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.themarker.com', 'newsSitesDropdown')">The Marker</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.timesofisrael.com/', 'newsSitesDropdown')">Times of Israel</div>	
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.ynet.co.il/home/0,7340,L-8,00.html', 'newsSitesDropdown')">Ynet</div>
+						<div class="custom-dropdown-item" onclick="openUrl('https://www.zman.co.il/', 'newsSitesDropdown')">Zman Israel</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">🇺🇸 USA</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.axios.com', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Axios</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://apnews.com/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">AP News</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://apnews.com/&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://edition.cnn.com/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">CNN</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://edition.cnn.com/&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.foxnews.com/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Fox News</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.foxnews.com/&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.ground.news', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Ground News</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.ground.news&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.nbcnews.com/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">NBC</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.nbcnews.com/&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.nytimes.com/international/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">New York Times</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.nytimes.com/international/&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.politico.com', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Politico</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.wsj.com/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Wall Street Journal</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.washingtonpost.com/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Washington Post</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.washingtoninstitute.org/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Washington Institute</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.washingtoninstitute.org/&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">🇬🇧 UK</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.bbc.com/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">BBC</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.bbc.com/&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.reuters.com/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Reuters</span>
+						</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">🇩🇪 Germany</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.spiegel.de/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Der Spiegel</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.spiegel.de/&hl=en&sl=auto&tl=en', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.5rem; cursor:pointer;" title="Translate to English">🇺🇸</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.spiegel.de/&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.dw.com', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">DW News</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.dw.com&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">🇪🇸 Spain</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.elconfidencial.com', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">El Confidencial</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.elconfidencial.com&hl=en&sl=auto&tl=en', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.5rem; cursor:pointer;" title="Translate to English">🇺🇸</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.elconfidencial.com&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.elpais.com', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">El País</span>
+							<span onclick="event.stopPropagation(); openUrl('https://english.elpais.com/', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.5rem; cursor:pointer;" title="Translate to English">🇺🇸</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.elpais.com&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">🇹🇷 Turkey</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.trtworld.com', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">TRT World</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.trtworld.com&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">🌍 Pan-European</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.euronews.com', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Euronews</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.euronews.com&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">🇱🇧 Lebanon (☠️ Hezbollah)</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.al-akhbar.com', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Al Akhbar</span>
+							<span onclick="event.stopPropagation(); openUrl('https://en.al-akhbar.com/', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.5rem; cursor:pointer;" title="Translate to English">🇺🇸</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.almayadeen.net', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Al Mayadeen (GeoBlocked)</span>
+							<span onclick="event.stopPropagation(); openUrl('https://english.almayadeen.net/', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.5rem; cursor:pointer;" title="Translate to English">🇺🇸</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.almanar.com.lb/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Al Manar</span>
+							<span onclick="event.stopPropagation(); openUrl('https://english.almanar.com.lb/', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.5rem; cursor:pointer;" title="Translate to English">🇺🇸</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://english.almanar.com.lb/&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">🇮🇷 Iran</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.alalam.ir/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Al Alam</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.alalam.ir/&hl=en&sl=auto&tl=en', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.5rem; cursor:pointer;" title="Translate to English">🇺🇸</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.alalam.ir/&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://tasnimnews.ir', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Tasnim News</span>
+							<span onclick="event.stopPropagation(); openUrl('https://tasnimnews.ir/en', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.5rem; cursor:pointer;" title="Translate to English">🇺🇸</span>
+							<span onclick="event.stopPropagation(); openUrl('https://tasnimnews.ir/he', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">🇶🇦 Qatar</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.aljazeera.com/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Al Jazeera (GeoBlocked)</span>
+						</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">🇸🇦 Saudi Arabia</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.alarabiya.net/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Al Arabiya</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.alhadath.net/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Al Hadath</span>
+						</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">🇵🇸 Palestinian</div>
+						
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.alquds.com/ar/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Al Quds 1</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://quds.tv/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Al Quds 2</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://quds.tv/&hl=en&sl=auto&tl=en', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.5rem; cursor:pointer;" title="Translate to English">🇺🇸</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://quds.tv/&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://qudstv.co/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Al Quds 3</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://qudstv.co/&hl=en&sl=auto&tl=en', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.5rem; cursor:pointer;" title="Translate to English">🇺🇸</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://qudstv.co/&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.alquds.co.uk/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Al Quds Al Arabi</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.shehabnews.com', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Shehab News</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.shehabnews.com&hl=en&sl=auto&tl=en', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.5rem; cursor:pointer;" title="Translate to English">🇺🇸</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.shehabnews.com&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.qudsn.net', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Quds News Network</span>
+						</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">🇺🇸 US-funded Arabic</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://www.alhurra.com/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Al Hurra</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.alhurra.com/&hl=en&sl=auto&tl=en', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.5rem; cursor:pointer;" title="Translate to English">🇺🇸</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://www.alhurra.com/&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">🇾🇪 Houties</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://masirahtv.net/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">Al Masirah</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://masirahtv.net/&hl=en&sl=auto&tl=en', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.5rem; cursor:pointer;" title="Translate to English">🇺🇸</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://masirahtv.net/&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+						<div class="custom-dropdown-item separator"></div>
+						<div class="custom-dropdown-item disabled">📈 Poles</div>
+						<div class="custom-dropdown-item" style="display:flex; justify-content:space-between; align-items:center;">
+							<span onclick="openUrl('https://polymarket.com/', 'newsSitesDropdown')" style="flex:1; cursor:pointer;">polymarket</span>
+							<span onclick="event.stopPropagation(); openUrl('https://translate.google.com/translate?u=https://polymarket.com/&hl=iw&sl=auto&tl=iw', 'newsSitesDropdown')" style="font-size:1rem; padding-left:0.25rem; cursor:pointer;" title="Translate to Hebrew">🇮🇱</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="mobile-tool-section">
+				<h4><i class="fas fa-search"></i> Search Location</h4>
+				<div style="display:flex;gap:0.5rem;align-items:center;">
+					<input type="text" class="mobile-search-input" id="mobileSearchBox" placeholder="Search location..." style="flex:1;"
+						onkeydown="if(event.key==='Enter'){event.preventDefault();var q=this.value.trim();if(q){window.open('https://www.google.com/maps/search/'+encodeURIComponent(q),'_blank');this.value='';closeMobileMenu();}}">
+					<button onclick="var q=document.getElementById('mobileSearchBox').value.trim();if(q){window.open('https://www.google.com/maps/search/'+encodeURIComponent(q),'_blank');document.getElementById('mobileSearchBox').value='';closeMobileMenu();}" style="padding:0.75rem;background:rgba(79,70,229,0.8);border:none;border-radius:6px;color:white;font-size:1rem;cursor:pointer;flex-shrink:0;">
+						<i class="fas fa-search"></i>
+					</button>
+				</div>
+				
+				<div style="margin-top:1.25rem;margin-bottom:1.25rem;border-top:1px solid rgba(255,255,255,0.08);"></div>
+
+				<button onclick="closeMobileMenu(); openAiSum();" style="width:100%;padding:0.75rem;background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.35);border-radius:8px;color:#60a5fa;font-size:0.9rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+					<i class="fas fa-robot"></i> AI News Summary
+				</button>
+
+				<button onclick="closeMobileMenu(); openAlertAnalytics();" style="margin-top:0.75rem;width:100%;padding:0.75rem;background:rgba(220,38,38,0.15);border:1px solid rgba(220,38,38,0.4);border-radius:8px;color:#f87171;font-size:0.9rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+					<i class="fas fa-rocket"></i> Israel Alert Analytics
+				</button>
+
+				<button onclick="closeMobileMenu(); openIranAttacks();" style="margin-top:0.5rem;width:100%;padding:0.75rem;background:rgba(251,146,60,0.12);border:1px solid rgba(251,146,60,0.35);border-radius:8px;color:#fb923c;font-size:0.9rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+					<i class="fas fa-globe"></i> In development: Iran's Attacks Since 28/2/2026
+				</button>
+				
+				<button onclick="closeMobileMenu(); openHormuz();" style="margin-top:0.5rem;width:100%;padding:0.75rem;background:rgba(34,211,238,0.10);border:1px solid rgba(34,211,238,0.35);border-radius:8px;color:#22d3ee;font-size:0.9rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+					<i class="fas fa-ship"></i> In development: Dashboard 2 - Hormuz
+				</button>
+				
+				<button onclick="closeMobileMenu(); openCentcom();" style="margin-top:0.5rem;width:100%;padding:0.75rem;background:rgba(239,68,68,0.10);border:1px solid rgba(239,68,68,0.35);border-radius:8px;color:#ef4444;font-size:0.9rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+					<i class="fas fa-tools" style="opacity:0.6;"></i> In development: Dashboard 2 - centcom
+				</button>
+				
+				<button onclick="closeMobileMenu(); openTurnBased();" style="margin-top:0.5rem;width:100%;padding:0.75rem;background:rgba(239,68,68,0.10);border:1px solid rgba(239,68,68,0.35);border-radius:8px;color:#ef4444;font-size:0.9rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+					<i class="fas fa-tools" style="opacity:0.6;"></i> In development: Dashboard 3 - Turn-based
+				</button>
+				
+				<button onclick="closeMobileMenu(); openMonteCarlo();" style="margin-top:0.5rem;width:100%;padding:0.75rem;background:rgba(239,68,68,0.10);border:1px solid rgba(239,68,68,0.35);border-radius:8px;color:#ef4444;font-size:0.9rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+					<i class="fas fa-tools" style="opacity:0.6;"></i> In development: Dashboard 3 - Monte Carlo
+				</button>
+				
+				<button onclick="closeMobileMenu(); openRecentEvents();" style="margin-top:0.5rem;width:100%;padding:0.75rem;background:rgba(6,214,160,0.08);border:1px solid rgba(6,214,160,0.35);border-radius:8px;color:rgba(6,214,160,0.9);font-size:0.9rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+					<i class="fas fa-clock"></i> In development: News 6 - Recent Events
+				</button>
+				
+				
+				
+				
+				
+				
+				
+				
+				<button onclick="alert('🚧 Map Comparison is under development. Coming soon!');" style="margin-top:0.5rem;width:100%;padding:0.75rem;background:rgba(148,163,184,0.06);border:1px dashed rgba(148,163,184,0.25);border-radius:8px;color:rgba(148,163,184,0.55);font-size:0.85rem;font-weight:500;cursor:not-allowed;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+					<i class="fas fa-tools" style="opacity:0.6;"></i> In development:------------------- Map comparison
+				</button>
+
+				<button onclick="alert('🚧 News is under development. Coming soon!');" style="margin-top:0.5rem;width:100%;padding:0.75rem;background:rgba(148,163,184,0.06);border:1px dashed rgba(148,163,184,0.25);border-radius:8px;color:rgba(148,163,184,0.55);font-size:0.85rem;font-weight:500;cursor:not-allowed;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+					<i class="fas fa-tools" style="opacity:0.6;"></i> In development:------------------- News
+				</button>
+
+				<button onclick="alert('🚧 Markets is under development. Coming soon!');" style="margin-top:0.5rem;width:100%;padding:0.75rem;background:rgba(148,163,184,0.06);border:1px dashed rgba(148,163,184,0.25);border-radius:8px;color:rgba(148,163,184,0.55);font-size:0.85rem;font-weight:500;cursor:not-allowed;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+					<i class="fas fa-tools" style="opacity:0.6;"></i> In development:------------------- Dashboard
+				</button>
+
+				<button onclick="closeMobileMenu(); openMarkets();" style="margin-top:0.5rem;width:100%;padding:0.75rem;background:rgba(6,214,160,0.08);border:1px solid rgba(6,214,160,0.35);border-radius:8px;color:rgba(6,214,160,0.9);font-size:0.9rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+					<i class="fas fa-tools"></i> In development:------------------- Markets
+				</button>
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				<div style="margin-top:1.25rem;margin-bottom:1.25rem;border-top:1px solid rgba(255,255,255,0.08);"></div>
+
+				<button onclick="closeMobileMenu(); openArsenal('iran');" style="margin-top:0.5rem;width:100%;padding:0.75rem;background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.35);border-radius:8px;color:#a78bfa;font-size:0.9rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+					<i class="fas fa-bomb"></i> Main Arsenal vs Israel
+				</button>	
+				
+			</div>
+		</div>
+	</div>
+	
+	<div class="ai-sum-overlay" id="aiSumOverlay">
+		<div class="ai-sum-panel">
+
+			<div class="ai-sum-header">
+				<div class="ai-sum-title">
+					<i class="fas fa-robot"></i>
+					<span class="gradient-text">AI Summary</span>
+					<span style="color:rgba(255,255,255,0.3); font-size:0.8rem; font-weight:400;">Top stories across all sources</span>
+				</div>
+				<button class="ai-sum-close" onclick="closeAiSum()">×</button>
+			</div>
+
+			<div class="ai-sum-controls">
+				<button class="ai-sum-fetch-btn" id="aiSumFetchBtn" onclick="fetchAiSum()">
+					<i class="fas fa-sync-alt"></i> Fetch News
+				</button>
+				<input type="password" class="gemini-key-input" id="geminiApiKey"
+					placeholder="Gemini API key (optional — improves grouping)">
+				<button class="gemini-enhance-btn" id="geminiEnhanceBtn" onclick="enhanceWithGemini()" disabled>
+					<i class="fas fa-magic"></i> Enhance
+				</button>
+			</div>
+
+			<div class="ai-sum-summary-bar" id="aiSumSummaryBar">
+				<span><strong id="statStories">0</strong> stories</span>
+				<span><strong id="statSources">0</strong> sources</span>
+				<span><strong id="statArticles">0</strong> articles fetched</span>
+				<span id="statGeminiBadge"></span>
+				<span id="statTime" style="margin-left:auto; color:rgba(255,255,255,0.3);"></span>
+			</div>
+
+			<!-- News Ticker -->
+			<div class="news-ticker" id="aiSumTicker" style="display:none;">
+				<div class="news-ticker-badge">⚡ LIVE</div>
+				<div class="news-ticker-track">
+					<div class="news-ticker-content" id="aiSumTickerContent"></div>
+				</div>
+			</div>
+			
+			<div class="ai-sum-loading" id="aiSumLoading">
+				<div class="ai-sum-spinner"></div>
+				<div>Fetching from sources...</div>
+				<div class="ai-sum-progress" id="aiSumProgress">Connecting to GDELT...</div>
+			</div>
+
+			<div class="ai-sum-empty" id="aiSumEmpty">
+				<i class="fas fa-newspaper" style="font-size:2rem; opacity:0.3;"></i>
+				<span>Click "Fetch News" to load top stories</span>
+			</div>
+
+			<div class="ai-sum-list" id="aiSumList"></div>
+
+		</div>
+	</div>
+
+	<!-- Combined Arsenal Overlay -->
+	<div class="ai-sum-overlay" id="arsenalOverlay">
+		<div class="ai-sum-panel">
+			<div class="ai-sum-header">
+				<div class="ai-sum-title">
+					<i class="fas fa-bomb" style="color:#a78bfa;"></i>
+					<span style="background:linear-gradient(135deg,#a78bfa,#f87171);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Main Arsenal vs Israel (up to 3/2026)</span>
+				</div>
+				<button class="ai-sum-close" onclick="closeArsenal()">&#215;</button>
+			</div>
+			<!-- Tabs -->
+			<div style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,0.08);padding:0 1.5rem;">
+				<button id="arsenalTabIran" onclick="switchArsenalTab('iran')" style="padding:0.6rem 1.2rem;background:none;border:none;border-bottom:2px solid #a78bfa;color:#a78bfa;font-size:1.1rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:0.4rem;"><img src="flags/ir.png" style="width:20px;height:14px;border-radius:2px;object-fit:cover;"> Iran</button>
+				<button id="arsenalTabHizbollah" onclick="switchArsenalTab('hizbollah')" style="padding:0.6rem 1.2rem;background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,0.35);font-size:1.1rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:0.4rem;"><img src="flags/Hezbollah.png" style="width:20px;height:14px;border-radius:2px;object-fit:cover;"> Hezbollah</button>
+			</div>
+			<div id="iranArsenalContent" style="padding:1.5rem;overflow:visible;"></div>
+			<div id="hezbollahArsenalContent" style="padding:1.5rem;display:none;"></div>
+		</div>
+	</div>
+	
+	<!-- Iran Attacks Overlay -->
+	<div class="ai-sum-overlay" id="iranAttacksOverlay">
+		<div class="ai-sum-panel">
+			<div class="ai-sum-header">
+				<div class="ai-sum-title">
+					<i class="fas fa-globe" style="color:#fb923c;"></i>
+					<span style="background:linear-gradient(135deg,#fb923c,#f87171);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Iran's Attacks Since 28/2/2026</span>
+				</div>
+				<button class="ai-sum-close" onclick="closeIranAttacks()">&#215;</button>
+			</div>
+			<div id="iranAttacksContent" style="padding:1.5rem;"></div>
+		</div>
+	</div>
+	
+	<!-- Hormuz Crisis Tracker Overlay -->
+	<div class="ai-sum-overlay" id="hormuzOverlay">
+		<div class="ai-sum-panel" style="max-width:none;width:100%;height:100vh;border-radius:0;display:flex;flex-direction:column;">
+			<div class="ai-sum-header" style="flex-shrink:0;">
+				<div class="ai-sum-title">
+					<i class="fas fa-ship" style="color:#22d3ee;"></i>
+					<span style="background:linear-gradient(135deg,#22d3ee,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Hormuz Crisis Tracker</span>
+					<span style="color:rgba(255,255,255,0.3); font-size:0.8rem; font-weight:400;">Live AIS Dashboard</span>
+				</div>
+				<button class="ai-sum-close" onclick="closeHormuz()">×</button>
+			</div>
+			<div style="flex:1;overflow:hidden;background:#0a0e17;">
+				<iframe id="hormuzFrame" src="" style="width:100%;height:100%;border:none;display:block;"></iframe>
+			</div>
+		</div>
+	</div>
+	
+	<!-- CENTCOM Dashboard Overlay -->
+	<div class="ai-sum-overlay" id="centcomOverlay">
+		<div class="ai-sum-panel" style="max-width:none;width:100%;height:100vh;border-radius:0;display:flex;flex-direction:column;">
+			<div class="ai-sum-header" style="flex-shrink:0;">
+				<div class="ai-sum-title">
+					<i class="fas fa-crosshairs" style="color:#ef4444;"></i>
+					<span style="background:linear-gradient(135deg,#ef4444,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">CENTCOM Theater Operations</span>
+					<span style="color:rgba(255,255,255,0.3); font-size:0.8rem; font-weight:400;">Magen Yehuda Intel</span>
+				</div>
+				<button class="ai-sum-close" onclick="closeCentcom()">×</button>
+			</div>
+			<div style="flex:1;overflow:hidden;background:#050510;">
+				<iframe id="centcomFrame" src="" style="width:100%;height:100%;border:none;display:block;"></iframe>
+			</div>
+		</div>
+	</div>
+	
+	<!-- Alert Analytics Overlay -->
+	<div class="ai-sum-overlay" id="alertAnalyticsOverlay">
+		<div class="ai-sum-panel">
+			<div class="ai-sum-header">
+				<div class="ai-sum-title">
+					<i class="fas fa-rocket" style="color:#f87171;"></i>
+					<span style="background:linear-gradient(135deg,#f87171,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Israel Alert Analytics</span>
+					<span style="color:rgba(255,255,255,0.3);font-size:0.8rem;font-weight:400;">Live data from Pikud HaOref</span>
+				</div>
+				<div style="display:flex;align-items:center;gap:0.75rem;">
+					<button onclick="fetchAlertAnalytics()" id="alertAnalyticsRefreshBtn" style="padding:0.4rem 0.9rem;background:rgba(220,38,38,0.2);border:1px solid rgba(220,38,38,0.4);border-radius:6px;color:#f87171;font-size:0.85rem;cursor:pointer;font-weight:600;"><i class="fas fa-sync-alt"></i> Refresh</button>
+					<button class="ai-sum-close" onclick="closeAlertAnalytics()">&#215;</button>
+				</div>
+			</div>
+			<div id="alertAnalyticsLoading" class="ai-sum-loading">
+				<div class="ai-sum-spinner" style="border-top-color:#f87171;"></div>
+				<span style="color:rgba(255,255,255,0.5);margin-left:1rem;">Fetching alert history...</span>
+			</div>
+			<div id="alertAnalyticsContent" style="padding:1.5rem;display:none;"></div>
+		</div>
+	</div>
+
+<!-- Turn-Based Overlay -->
+<div class="ai-sum-overlay" id="turnBasedOverlay">
+  <div class="ai-sum-panel" style="max-width:none;width:100%;height:100vh;border-radius:0;display:flex;flex-direction:column;">
+    <div class="ai-sum-header" style="flex-shrink:0;border-bottom:1px solid rgba(6,182,212,0.2);background:linear-gradient(90deg,rgba(6,182,212,0.06) 0%,transparent 60%);">
+      <div class="ai-sum-title">
+        <i class="fas fa-chess" style="color:#06b6d4;"></i>
+        <span style="background:linear-gradient(135deg,#06b6d4,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;">Turn-Based Wargame</span>
+        <span style="color:rgba(255,255,255,0.3);font-size:0.8rem;font-weight:400;">12-Turn Escalation Cycle</span>
+      </div>
+      <button class="ai-sum-close" onclick="closeTurnBased()">&#215;</button>
+    </div>
+    <div style="flex:1;overflow:hidden;background:#030810;">
+      <iframe id="turnBasedFrame" src="" style="width:100%;height:100%;border:none;display:block;"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- Monte Carlo Overlay -->
+<div class="ai-sum-overlay" id="monteCarloOverlay">
+  <div class="ai-sum-panel" style="max-width:none;width:100%;height:100vh;border-radius:0;display:flex;flex-direction:column;">
+    <div class="ai-sum-header" style="flex-shrink:0;border-bottom:1px solid rgba(217,70,239,0.2);background:linear-gradient(90deg,rgba(217,70,239,0.06) 0%,transparent 60%);">
+      <div class="ai-sum-title">
+        <i class="fas fa-dice" style="color:#d946ef;"></i>
+        <span style="background:linear-gradient(135deg,#d946ef,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;">Monte Carlo Simulation</span>
+        <span style="color:rgba(255,255,255,0.3);font-size:0.8rem;font-weight:400;">100,000 Iterations</span>
+      </div>
+      <button class="ai-sum-close" onclick="closeMonteCarlo()">&#215;</button>
+    </div>
+    <div style="flex:1;overflow:hidden;background:#030810;">
+      <iframe id="monteCarloFrame" src="" style="width:100%;height:100%;border:none;display:block;"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- Markets Overlay -->
+<div id="marketsOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:9999;flex-direction:column;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:#080818;border-bottom:1px solid rgba(6,214,160,0.25);flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="width:8px;height:8px;border-radius:50%;background:#06d6a0;display:inline-block;box-shadow:0 0 6px rgba(6,214,160,0.5);"></span>
+      <span style="color:#06d6a0;font-weight:700;font-size:0.95rem;">Markets Dashboard</span>
+      <span style="font-size:0.75rem;background:rgba(6,214,160,0.1);color:#06d6a0;padding:2px 8px;border-radius:10px;">Marex Solutions · Live</span>
+    </div>
+    <button onclick="closeMarkets()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#fff;font-size:1.1rem;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&#215;</button>
+  </div>
+  <iframe id="marketsFrame" src="" style="flex:1;width:100%;border:none;" allowfullscreen></iframe>
+</div>
+
+<script>
+  function openTurnBased() {
+    document.getElementById('turnBasedOverlay').style.display = 'flex';
+    document.getElementById('turnBasedFrame').src = 'turns.html';
+    document.body.style.overflow = 'hidden';
+  }
+  function closeTurnBased() {
+    document.getElementById('turnBasedOverlay').style.display = 'none';
+    document.getElementById('turnBasedFrame').src = '';
+    document.body.style.overflow = '';
+  }
+  function openMonteCarlo() {
+    document.getElementById('monteCarloOverlay').style.display = 'flex';
+    document.getElementById('monteCarloFrame').src = 'montecarlo.html';
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMonteCarlo() {
+    document.getElementById('monteCarloOverlay').style.display = 'none';
+    document.getElementById('monteCarloFrame').src = '';
+    document.body.style.overflow = '';
+  }
+    function openMarkets() {
+    document.getElementById('marketsOverlay').style.display = 'flex';
+    document.getElementById('marketsFrame').src = 'Markets.html';
+    document.body.style.overflow = 'hidden';
+  }
+  function closeMarkets() {
+    document.getElementById('marketsOverlay').style.display = 'none';
+    document.getElementById('marketsFrame').src = '';
+    document.body.style.overflow = '';
+  }
+</script>
+
+<!-- Recent Events Overlay -->
+<div class="ai-sum-overlay" id="recentEventsOverlay">
+    <div class="ai-sum-panel">
+        <div class="ai-sum-header">
+            <div class="ai-sum-title">
+                <span style="width:8px;height:8px;border-radius:50%;background:#06d6a0;display:inline-block;box-shadow:0 0 6px rgba(6,214,160,0.5);flex-shrink:0;"></span>
+                <span style="background:linear-gradient(135deg,#06d6a0,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;">Historical Context</span>
+                <span style="font-size:0.75rem;background:rgba(26,115,232,0.1);color:#3a86ff;padding:2px 8px;border-radius:10px;font-weight:600;">Key Events Timeline</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span id="re-updated" style="font-size:10px;color:rgba(255,255,255,0.3);font-family:'IBM Plex Mono',monospace;"></span>
+                <button class="ai-sum-close" onclick="closeRecentEvents()">&#215;</button>
+            </div>
+        </div>
+
+        <div style="padding:1.5rem;">
+          <div style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:16px;font-family:'IBM Plex Mono',monospace;">Historical Context</div>
+          <div style="position:relative;padding-left:28px;">
+            <div style="position:absolute;left:8px;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.08);"></div>
+
+            <div style="position:relative;margin-bottom:22px;">
+              <div style="position:absolute;left:-24px;top:5px;width:10px;height:10px;border-radius:50%;background:#1a73e8;box-shadow:0 0 0 2px rgba(3,8,16,0.8),0 0 0 3px rgba(26,115,232,0.5);"></div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:'IBM Plex Mono',monospace;margin-bottom:3px;">2015</div>
+              <div style="font-size:13px;font-weight:600;color:#f8fafc;margin-bottom:4px;">JCPOA Nuclear Deal Signed</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.65;">Iran agrees to limit nuclear program in exchange for sanctions relief. Signed by Iran, U.S., UK, France, Germany, Russia, China.</div>
+              <div style="margin-top:5px;font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:#06d6a0;">Source: IAEA, UN records</div>
+            </div>
+
+            <div style="position:relative;margin-bottom:22px;">
+              <div style="position:absolute;left:-24px;top:5px;width:10px;height:10px;border-radius:50%;background:#e67e22;box-shadow:0 0 0 2px rgba(3,8,16,0.8),0 0 0 3px rgba(230,126,34,0.5);"></div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:'IBM Plex Mono',monospace;margin-bottom:3px;">May 2018</div>
+              <div style="font-size:13px;font-weight:600;color:#f8fafc;margin-bottom:4px;">U.S. Withdraws from JCPOA</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.65;">President Trump withdraws U.S. from the deal and re-imposes sanctions, citing Iranian non-compliance claims disputed by IAEA inspectors.</div>
+              <div style="margin-top:5px;font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:#3a86ff;">Source: White House, IAEA reports</div>
+            </div>
+
+            <div style="position:relative;margin-bottom:22px;">
+              <div style="position:absolute;left:-24px;top:5px;width:10px;height:10px;border-radius:50%;background:#1a73e8;box-shadow:0 0 0 2px rgba(3,8,16,0.8),0 0 0 3px rgba(26,115,232,0.5);"></div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:'IBM Plex Mono',monospace;margin-bottom:3px;">Jan 2020</div>
+              <div style="font-size:13px;font-weight:600;color:#f8fafc;margin-bottom:4px;">Qasem Soleimani Killed in U.S. Strike</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.65;">U.S. drone strike kills IRGC Quds Force commander near Baghdad airport. Iran vows retaliation. Iran retaliates with ballistic missile strikes on U.S. bases in Iraq — no U.S. deaths, but TBI injuries reported.</div>
+              <div style="margin-top:5px;font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:#3a86ff;">Source: Pentagon, CENTCOM confirmed</div>
+            </div>
+
+            <div style="position:relative;margin-bottom:22px;">
+              <div style="position:absolute;left:-24px;top:5px;width:10px;height:10px;border-radius:50%;background:#1a73e8;box-shadow:0 0 0 2px rgba(3,8,16,0.8),0 0 0 3px rgba(26,115,232,0.5);"></div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:'IBM Plex Mono',monospace;margin-bottom:3px;">2021–2022</div>
+              <div style="font-size:13px;font-weight:600;color:#f8fafc;margin-bottom:4px;">JCPOA Revival Talks Stall</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.65;">Biden administration re-engages in nuclear deal talks in Vienna. Talks produce no agreement. Iran advances uranium enrichment to near-weapons-grade levels confirmed by IAEA.</div>
+              <div style="margin-top:5px;font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:#06d6a0;">Source: IAEA, EU statements</div>
+            </div>
+
+            <div style="position:relative;margin-bottom:22px;">
+              <div style="position:absolute;left:-24px;top:5px;width:10px;height:10px;border-radius:50%;background:#8e44ad;box-shadow:0 0 0 2px rgba(3,8,16,0.8),0 0 0 3px rgba(142,68,173,0.5);"></div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:'IBM Plex Mono',monospace;margin-bottom:3px;">2023</div>
+              <div style="font-size:13px;font-weight:600;color:#f8fafc;margin-bottom:4px;">Proxy Escalation Intensifies</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.65;">Iranian-backed groups increase attacks on U.S. personnel in Iraq and Syria. U.S. conducts retaliatory strikes. Exact attribution of proxy groups to Iranian command remains contested.</div>
+              <div style="margin-top:5px;font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:#ffbe0b;">Source: Multiple — attribution disputed</div>
+            </div>
+
+            <div style="position:relative;margin-bottom:22px;">
+              <div style="position:absolute;left:-24px;top:5px;width:10px;height:10px;border-radius:50%;background:#1a73e8;box-shadow:0 0 0 2px rgba(3,8,16,0.8),0 0 0 3px rgba(26,115,232,0.5);"></div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:'IBM Plex Mono',monospace;margin-bottom:3px;">Apr 2024</div>
+              <div style="font-size:13px;font-weight:600;color:#f8fafc;margin-bottom:4px;">Iran Launches First Direct Strike on Israel</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.65;">Iran fires over 300 drones and missiles directly at Israel — unprecedented direct attack. Largely intercepted by Israeli, U.S., UK, and Jordanian defenses. Iran frames as proportional response to Israeli consulate strike in Damascus.</div>
+              <div style="margin-top:5px;font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:#06d6a0;">Source: IDF, Iranian state media, Reuters</div>
+            </div>
+
+            <div style="position:relative;margin-bottom:22px;">
+              <div style="position:absolute;left:-24px;top:5px;width:10px;height:10px;border-radius:50%;background:#1a73e8;box-shadow:0 0 0 2px rgba(3,8,16,0.8),0 0 0 3px rgba(26,115,232,0.5);"></div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:'IBM Plex Mono',monospace;margin-bottom:3px;">2024–2025</div>
+              <div style="font-size:13px;font-weight:600;color:#f8fafc;margin-bottom:4px;">Regional Escalation &amp; Twelve-Day War</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.65;">Hezbollah, Houthi, and Iran-backed militia activity escalates. In June 2025, Israel and the U.S. launch the "Twelve-Day War" — airstrikes targeting Iran's nuclear facilities. 1,190+ killed in Iran per HRANA. A ceasefire holds briefly. Iran accelerates uranium enrichment and withdraws from the NPT in January 2026.</div>
+              <div style="margin-top:5px;font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:#06d6a0;">Source: CENTCOM, Reuters, BBC, Wikipedia</div>
+            </div>
+
+            <div style="position:relative;margin-bottom:22px;">
+              <div style="position:absolute;left:-24px;top:5px;width:10px;height:10px;border-radius:50%;background:#1a73e8;box-shadow:0 0 0 2px rgba(3,8,16,0.8),0 0 0 3px rgba(26,115,232,0.5);"></div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:'IBM Plex Mono',monospace;margin-bottom:3px;">Jan 2026</div>
+              <div style="font-size:13px;font-weight:600;color:#f8fafc;margin-bottom:4px;">Mass Protests in Iran — Thousands Killed by IRGC</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.65;">Massive nationwide anti-government protests erupt in Iran — the largest since the 1979 revolution. The IRGC kills thousands of demonstrators. Death toll estimates range from 3,117 (Iranian government) to 32,000 (non-government Iranian health officials). Trump threatens military intervention and pledges "help is on the way" to protesters.</div>
+              <div style="margin-top:5px;font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:#3a86ff;">Source: HRANA, Wikipedia, White House</div>
+            </div>
+
+            <div style="position:relative;margin-bottom:22px;">
+              <div style="position:absolute;left:-24px;top:5px;width:10px;height:10px;border-radius:50%;background:#e67e22;box-shadow:0 0 0 2px rgba(3,8,16,0.8),0 0 0 3px rgba(230,126,34,0.5);"></div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:'IBM Plex Mono',monospace;margin-bottom:3px;">Feb 13 – 27, 2026</div>
+              <div style="font-size:13px;font-weight:600;color:#f8fafc;margin-bottom:4px;">Trump Declares Regime Change Goal — War Buildup</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.65;">Trump openly calls for regime change, saying it would be "the best thing that could happen to the Iranian people." The U.S. undertakes its largest Middle East military buildup since 2003. Iran and the U.S. hold indirect nuclear negotiations. Iran refuses to stand down. By Feb 27, a U.S. "armada" is positioned in the region.</div>
+              <div style="margin-top:5px;font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:#3a86ff;">Source: White House, Wikipedia</div>
+            </div>
+
+            <div style="position:relative;margin-bottom:22px;border-left:2px solid #ff4d4d;padding-left:10px;margin-left:-10px;">
+              <div style="position:absolute;left:-22px;top:5px;width:10px;height:10px;border-radius:50%;background:#ff4d4d;box-shadow:0 0 0 2px rgba(3,8,16,0.8),0 0 0 3px rgba(255,77,77,0.6);"></div>
+              <div style="font-size:10px;color:#ff4d4d;font-family:'IBM Plex Mono',monospace;margin-bottom:3px;font-weight:700;">Feb 28, 2026 — WAR BEGINS</div>
+              <div style="font-size:13px;font-weight:700;color:#ff4d4d;margin-bottom:4px;">Operation Epic Fury — U.S. &amp; Israel Launch Direct War on Iran</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.65;">The U.S. and Israel launch surprise joint airstrikes across Iran, killing Supreme Leader Khamenei and numerous officials. Targets include nuclear sites, missile batteries, air defenses, and leadership compounds. On the same day, a U.S. airstrike strikes the Minab Girls' School — Amnesty International concludes 100+ civilians including children were killed. Iran immediately retaliates with missile and drone strikes on Israel, U.S. bases, and Gulf states.</div>
+              <div style="margin-top:5px;font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:#3a86ff;">Source: CENTCOM, Amnesty International, Reuters, Wikipedia</div>
+            </div>
+
+            <div style="position:relative;margin-bottom:22px;">
+              <div style="position:absolute;left:-24px;top:5px;width:10px;height:10px;border-radius:50%;background:#1a73e8;box-shadow:0 0 0 2px rgba(3,8,16,0.8),0 0 0 3px rgba(26,115,232,0.5);"></div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.25);font-family:'IBM Plex Mono',monospace;margin-bottom:3px;">Mar 1–13, 2026</div>
+              <div style="font-size:13px;font-weight:600;color:#f8fafc;margin-bottom:4px;">War Expands — Kharg Island Struck, Casualties Mount</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.65;">U.S. strikes 7,000+ targets inside Iran. Iran's oil export hub at Kharg Island is struck and "obliterated" per Trump. Iran strikes 27 U.S. bases across the region. Lebanon drawn in — 880+ killed in Israeli strikes. 13 U.S. service members confirmed killed. Iran's Health Ministry reports 1,444+ killed, 18,500+ injured inside Iran. UNSC sessions held; resolution blocked by veto.</div>
+              <div style="margin-top:5px;font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:#06d6a0;">Source: CENTCOM, NPR, Al Jazeera, TIME — as of Mar 18, 2026</div>
+            </div>
+
+          </div>
+        </div>
+    </div>
+</div>
+
+<script>
+  var _reLoaded = false;
+  var _RE_COLOR = { fact:'#1a73e8', govt:'#e67e22', framing:'#8e44ad' };
+  var _RE_LABEL = { fact:'🔵 Multi-source confirmed', govt:'🟠 Official statement', framing:'🟣 Single source / framing' };
+
+  function openRecentEvents() {
+    document.getElementById('recentEventsOverlay').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    if (!_reLoaded) _loadRecentEvents();
+  }
+
+  function closeRecentEvents() {
+    document.getElementById('recentEventsOverlay').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+function _loadRecentEvents() {
+    var container = document.getElementById('re-container');
+    var updEl     = document.getElementById('re-updated');
+    var line = '<div style="position:absolute;left:8px;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.08);"></div>';
+
+    var data = {
+      "updated": "2026-03-25 15:49 UTC",
+      "events": [
+        { "date":"2026-03-25","dateDisplay":"Mar 25, 2026","title":"US demands of 15-point peace plan likely 'unacceptable' for Iran","link":"https://www.france24.com/en/us-demands-of-15-point-peace-plan-likely-unacceptable-for-iran","sources":["France 24"],"type":"framing" },
+        { "date":"2026-03-24","dateDisplay":"Mar 24, 2026","title":"The Israeli military wants several more weeks to fight Iran war, officials say","link":"https://www.npr.org/2026/03/24/nx-s1-5759317/israel-iran-war","sources":["NPR News"],"type":"framing" },
+        { "date":"2026-03-23","dateDisplay":"Mar 23, 2026","title":"A committed pharmacist and a homesick blogger – the Iranian civilians killed in the war","link":"https://www.bbc.com/news/articles/c3v6ld7lv9no","sources":["BBC"],"type":"framing" },
+        { "date":"2026-03-22","dateDisplay":"Mar 22, 2026","title":"Israel to expand ground and air attacks against Hezbollah in Lebanon","link":"https://www.bbc.com/news/articles/c30rl05evd8o","sources":["BBC"],"type":"framing" },
+        { "date":"2026-03-21","dateDisplay":"Mar 21, 2026","title":"US lifts sanctions on some Iranian oil as energy prices soar","link":"https://www.bbc.com/news/articles/c9d415g55nno","sources":["BBC"],"type":"framing" },
+        { "date":"2026-03-20","dateDisplay":"Mar 20, 2026","title":"Iranian strikes on bases used by US caused $800m in damage, new analysis shows","link":"https://www.bbc.com/news/articles/cddq7j48p35o","sources":["BBC"],"type":"framing" },
+        { "date":"2026-03-16","dateDisplay":"Mar 16, 2026","title":"Wary allies show there's no quick fix to Trump's Iran crisis","link":"https://www.bbc.com/news/articles/c8r17plnvy3o","sources":["BBC"],"type":"framing" },
+        { "date":"2026-03-15","dateDisplay":"Mar 15, 2026","title":"How Iranians are evading internet blocks to contact family abroad","link":"https://www.bbc.com/news/articles/ckgl58y5943o","sources":["BBC"],"type":"framing" },
+        { "date":"2026-03-13","dateDisplay":"Mar 13, 2026","title":"Under drone fire, exiled Kurds wait to confront Iranian regime","link":"https://www.bbc.com/news/articles/c79505804lpo","sources":["BBC"],"type":"framing" },
+        { "date":"2026-03-12","dateDisplay":"Mar 12, 2026","title":"Tracking the wave of ship attacks that has choked off Strait of Hormuz","link":"https://www.bbc.com/news/articles/c80j4rln8zmo","sources":["BBC"],"type":"framing" }
+      ]
+    };
+
+    if (updEl && data.updated) updEl.textContent = 'Updated: ' + data.updated;
+    container.innerHTML = line + data.events.map(function(e) {
+      var dotColor = _RE_COLOR[e.type] || '#94a3b8';
+      var label    = _RE_LABEL[e.type]  || e.type;
+      return '<div style="position:relative;margin-bottom:20px;">'
+        + '<div style="position:absolute;left:-24px;top:5px;width:10px;height:10px;border-radius:50%;background:' + dotColor + ';box-shadow:0 0 0 2px rgba(3,8,16,0.8),0 0 0 3px ' + dotColor + '55;"></div>'
+        + '<div style="font-size:10px;color:rgba(255,255,255,0.3);font-family:\'IBM Plex Mono\',monospace;letter-spacing:0.5px;margin-bottom:3px;">' + e.dateDisplay + '</div>'
+        + '<a href="' + e.link + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">'
+        + '<div style="font-size:13px;font-weight:600;color:#f8fafc;line-height:1.45;margin-bottom:5px;">' + e.title + '</div>'
+        + '</a>'
+        + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+        + '<span style="font-size:10px;color:' + dotColor + ';font-family:\'IBM Plex Mono\',monospace;">' + label + '</span>'
+        + '<span style="font-size:10px;color:rgba(255,255,255,0.25);">' + e.sources.join(' · ') + '</span>'
+        + '</div></div>';
+    }).join('');
+    _reLoaded = true;
+  }
+
+  document.getElementById('recentEventsOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeRecentEvents();
+  });
+</script>
+</body>
+</html>

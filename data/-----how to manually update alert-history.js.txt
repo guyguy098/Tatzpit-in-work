@@ -1,0 +1,40 @@
+1. open tzevadom.com
+2. Press F12
+3. Select Console
+4. paste this and press Enter:
+(async () => {
+  const WAR_START = 1772236800;
+  const all = [];
+  for (let page = 1; page <= 500; page++) {
+    const r = await fetch('/api/alerts-history/recent?page=' + page + '&limit=100');
+    if (!r.ok) break;
+    const data = await r.json();
+    if (!Array.isArray(data) || data.length === 0) break;
+    let hitPreWar = false;
+    for (const ev of data) {
+      if (ev.startTime < WAR_START) { hitPreWar = true; continue; }
+      all.push({
+        id: ev.id,
+        description: ev.description || null,
+        alerts: [{ time: ev.startTime, cities: ev.cities || [], threat: ev.type != null ? ev.type : 0, isDrill: false }],
+        endTime: ev.endTime || null
+      });
+    }
+    if (page % 10 === 0 || page <= 3 || hitPreWar) {
+      console.log('Page ' + page + ': total kept: ' + all.length + (hitPreWar ? ' [reached pre-war]' : ''));
+    }
+    if (hitPreWar) break;
+  }
+  console.log('TOTAL: ' + all.length);
+  if (!all.length) return;
+  all.sort(function(a, b) { return b.alerts[0].time - a.alerts[0].time; });
+  const json = JSON.stringify({ updated: new Date().toISOString(), source: 'tzevadom.com', event_count: all.length, events: all });
+  const blob = new Blob(['const ALERT_HISTORY_DATA = ' + json + ';'], { type: 'application/javascript' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'alert-history.js';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  console.log('Downloaded alert-history.js with ' + all.length + ' events');
+})();

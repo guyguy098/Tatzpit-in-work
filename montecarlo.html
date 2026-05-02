@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monte Carlo Simulation</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-abyss:#030810;--bg-deep:#020617;--bg-surface:#0f172a;--bg-raised:#1e293b;
+      --border-dim:#1a2744;--border-bright:#243656;
+      --text-primary:#f8fafc;--text-secondary:#cbd5e1;--text-muted:#94a3b8;
+      --accent-red:#ef4444;--accent-amber:#f59e0b;--accent-yellow:#eab308;
+      --accent-green:#22c55e;--accent-cyan:#06b6d4;--accent-magenta:#d946ef;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'IBM Plex Sans',system-ui,sans-serif;background:var(--bg-abyss);color:var(--text-primary);padding:16px;}
+    .font-mono{font-family:'IBM Plex Mono',monospace;}
+    .data-table{width:100%;border-collapse:collapse;font-size:13px;font-family:'IBM Plex Mono',monospace;}
+    .data-table th{text-align:left;padding:8px 12px;background:var(--bg-deep);color:var(--text-muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;border-bottom:1px solid var(--border-bright);}
+    .data-table td{padding:8px 12px;border-bottom:1px solid rgba(26,39,68,0.4);font-size:13px;}
+    .mc-param-card{background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:4px;padding:10px 12px;}
+    .mc-param-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+    .mc-param-label{font-size:12px;color:var(--text-secondary);font-weight:500;}
+    .mc-param-value{font-size:16px;font-weight:700;color:var(--accent-cyan);min-width:45px;text-align:right;}
+    .mc-param-range{display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-muted);}
+    .mc-param-src{font-size:9px;color:var(--text-muted);opacity:0.6;}
+    .mc-slider{-webkit-appearance:none;appearance:none;width:100%;height:6px;background:var(--bg-abyss);border-radius:3px;outline:none;border:1px solid var(--border-dim);cursor:pointer;}
+    .mc-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent-cyan);border:2px solid var(--bg-abyss);box-shadow:0 0 6px rgba(6,182,212,0.3);cursor:pointer;}
+    .mc-slider-danger::-webkit-slider-thumb{background:var(--accent-red);box-shadow:0 0 6px rgba(239,68,68,0.3);}
+    .mc-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent-cyan);border:2px solid var(--bg-abyss);cursor:pointer;}
+    .mc-preset-btn{padding:5px 12px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;}
+    .mc-preset-btn.active{outline:2px solid currentColor;outline-offset:2px;}
+    .mc-chart-block{background:var(--bg-surface);border:1px solid var(--border-dim);border-radius:6px;padding:12px;margin-bottom:12px;}
+    .mc-chart-label{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border-dim);}
+    .mc-chart-label-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border-dim);}
+    .mc-donut-layout{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;}
+    .mc-donut-canvas-wrap{flex-shrink:0;position:relative;width:360px;height:360px;max-width:100%;}
+    .mc-donut-legend{flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px;padding-top:8px;}
+    .mc-legend-item{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:4px;border:1px solid transparent;transition:all 0.15s;cursor:pointer;}
+    .mc-legend-item:hover,.mc-legend-item.highlighted{background:var(--bg-raised);border-color:var(--border-bright);}
+    .mc-legend-swatch{width:14px;height:14px;border-radius:3px;flex-shrink:0;}
+    .mc-legend-text{flex:1;font-size:12px;color:var(--text-secondary);line-height:1.4;}
+    .mc-legend-pct{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:var(--text-primary);flex-shrink:0;}
+    .mc-info-btn{background:none;border:1px solid rgba(6,182,212,0.3);border-radius:50%;width:18px;height:18px;color:var(--accent-cyan);font-size:11px;cursor:pointer;flex-shrink:0;}
+    .mc-popup{display:none;padding:10px 12px;background:var(--bg-deep);border:1px solid var(--border-bright);border-radius:4px;font-size:12px;color:var(--text-secondary);line-height:1.6;margin-bottom:8px;}
+    .mc-popup.visible{display:block;}
+    ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--bg-deep);}::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:3px;}
+    .chart-wrap{position:relative;border-radius:6px;}
+    .mc-chart-canvas-wrap{position:relative;height:340px;max-height:340px;}
+  </style>
+</head>
+<body>
+
+  <!-- Presets -->
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;align-items:center;">
+    <span class="font-mono" style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-right:4px;">PRESETS:</span>
+    <button class="mc-preset-btn" onclick="applyPreset('optimistic')" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);color:#4ade80;">De-Escalation</button>
+    <button class="mc-preset-btn" onclick="applyPreset('base')" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#fbbf24;">Base Case</button>
+    <button class="mc-preset-btn" onclick="applyPreset('escalation')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#f87171;">Full Escalation</button>
+    <button class="mc-preset-btn" onclick="applyPreset('nuclear')" style="background:rgba(217,70,239,0.1);border:1px solid rgba(217,70,239,0.25);color:#e879f9;">Nuclear Threshold</button>
+    <button class="mc-preset-btn" onclick="applyPreset('base')" style="background:var(--bg-deep);border:1px solid var(--border-dim);color:var(--text-muted);">Reset Defaults</button>
+  </div>
+
+  <!-- Parameters -->
+  <div style="background:var(--bg-deep);border:1px solid var(--border-dim);border-radius:6px;padding:14px;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="font-mono" style="font-size:12px;color:var(--accent-magenta);text-transform:uppercase;">Adjustable Simulation Parameters</div>
+      <button class="mc-info-btn" onclick="toggleMcPopup('paramsPopup')">&#9432;</button>
+    </div>
+    <div class="mc-popup" id="paramsPopup"><strong>Simulation Parameters</strong><br>Each slider controls a key input variable fed into 100,000 Monte Carlo iterations. <strong>War Duration</strong> uses a log-normal distribution calibrated to Trump/WH estimates. <strong>Hormuz Min/Max</strong> sets the uniform closure window based on IRGC operational data. <strong>Alliance Fragmentation</strong> and <strong>Regime Collapse</strong> are Bernoulli probabilities. <strong>Nuclear Escalation</strong> is calibrated to the NPEC wargame 8% baseline. <strong>Proxy Fronts</strong> and <strong>Russia Escalation</strong> use Poisson and triangular distributions respectively.</div>
+    <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));">
+      <div class="mc-param-card"><div class="mc-param-header"><span class="mc-param-label">War Duration (mean weeks)</span><span class="mc-param-value font-mono" id="val_duration">4</span></div><input type="range" id="sl_duration" min="1" max="20" step="0.5" value="4" class="mc-slider" oninput="updateParamDisplay('duration',this.value)"><div class="mc-param-range"><span>1 wk</span><span class="mc-param-src">Log-Normal | Trump/WH</span><span>20 wk</span></div></div>
+      <div class="mc-param-card"><div class="mc-param-header"><span class="mc-param-label">Hormuz Closure Min (days)</span><span class="mc-param-value font-mono" id="val_hormuz_min">7</span></div><input type="range" id="sl_hormuz_min" min="1" max="60" step="1" value="7" class="mc-slider" oninput="updateParamDisplay('hormuz_min',this.value)"><div class="mc-param-range"><span>1 d</span><span class="mc-param-src">Uniform</span><span>60 d</span></div></div>
+      <div class="mc-param-card"><div class="mc-param-header"><span class="mc-param-label">Hormuz Closure Max (days)</span><span class="mc-param-value font-mono" id="val_hormuz_max">120</span></div><input type="range" id="sl_hormuz_max" min="30" max="365" step="5" value="120" class="mc-slider" oninput="updateParamDisplay('hormuz_max',this.value)"><div class="mc-param-range"><span>30 d</span><span class="mc-param-src">IRGC closure data</span><span>365 d</span></div></div>
+      <div class="mc-param-card"><div class="mc-param-header"><span class="mc-param-label">Alliance Fragmentation Prob</span><span class="mc-param-value font-mono" id="val_alliance">30%</span></div><input type="range" id="sl_alliance" min="0" max="100" step="1" value="30" class="mc-slider" oninput="updateParamDisplay('alliance',this.value+'%')"><div class="mc-param-range"><span>0%</span><span class="mc-param-src">Bernoulli | Analyst est.</span><span>100%</span></div></div>
+      <div class="mc-param-card"><div class="mc-param-header"><span class="mc-param-label">Iran Regime Collapse Prob</span><span class="mc-param-value font-mono" id="val_regime">35%</span></div><input type="range" id="sl_regime" min="0" max="100" step="1" value="35" class="mc-slider" oninput="updateParamDisplay('regime',this.value+'%')"><div class="mc-param-range"><span>0%</span><span class="mc-param-src">Bernoulli | IRGC analysis</span><span>100%</span></div></div>
+      <div class="mc-param-card" style="border-color:rgba(239,68,68,0.2);"><div class="mc-param-header"><span class="mc-param-label" style="color:var(--accent-red);">&#9762; Nuclear Escalation Prob</span><span class="mc-param-value font-mono" id="val_nuclear" style="color:var(--accent-red);">8%</span></div><input type="range" id="sl_nuclear" min="0" max="50" step="1" value="8" class="mc-slider mc-slider-danger" oninput="updateParamDisplay('nuclear',this.value+'%')"><div class="mc-param-range"><span>0%</span><span class="mc-param-src">Bernoulli | NPEC wargame</span><span>50%</span></div></div>
+      <div class="mc-param-card"><div class="mc-param-header"><span class="mc-param-label">Proxy Fronts (&#955; mean)</span><span class="mc-param-value font-mono" id="val_proxy">3</span></div><input type="range" id="sl_proxy" min="1" max="7" step="0.5" value="3" class="mc-slider" oninput="updateParamDisplay('proxy',this.value)"><div class="mc-param-range"><span>1</span><span class="mc-param-src">Poisson | CSIS</span><span>7</span></div></div>
+      <div class="mc-param-card"><div class="mc-param-header"><span class="mc-param-label">Russia Escalation (&#955; mean)</span><span class="mc-param-value font-mono" id="val_russia">3</span></div><input type="range" id="sl_russia" min="0" max="8" step="0.5" value="3" class="mc-slider" oninput="updateParamDisplay('russia',this.value)"><div class="mc-param-range"><span>0</span><span class="mc-param-src">Triangular | RAND</span><span>8</span></div></div>
+      <div class="mc-param-card"><div class="mc-param-header"><span class="mc-param-label">Iterations</span><span class="mc-param-value font-mono" id="val_iterations">100,000</span></div><input type="range" id="sl_iterations" min="10000" max="100000" step="10000" value="100000" class="mc-slider" oninput="updateParamDisplay('iterations',Number(this.value).toLocaleString())"><div class="mc-param-range"><span>10K</span><span class="mc-param-src">Simulation depth</span><span>100K</span></div></div>
+    </div>
+    <div style="text-align:center;margin-top:14px;">
+      <button id="runSimBtn" onclick="runMonteCarloSimulation()" style="padding:12px 32px;background:linear-gradient(135deg,rgba(217,70,239,0.2),rgba(217,70,239,0.05));border:1px solid rgba(217,70,239,0.4);border-radius:6px;color:#e879f9;font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;cursor:pointer;">&#9654; RUN SIMULATION</button>
+      <div id="simStatus" class="font-mono" style="font-size:12px;color:var(--text-muted);margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <!-- Delta Banner -->
+  <div id="mcDeltaBanner" style="display:none;padding:10px 14px;background:rgba(6,182,212,0.06);border:1px solid rgba(6,182,212,0.15);border-radius:4px;margin-bottom:14px;">
+    <div class="font-mono" style="font-size:11px;color:var(--accent-cyan);text-transform:uppercase;margin-bottom:6px;">Change From Previous Run</div>
+    <div id="mcDeltaContent" class="font-mono" style="font-size:13px;color:var(--text-secondary);line-height:1.8;"></div>
+  </div>
+
+  <!-- Charts -->
+  <div class="mc-chart-block">
+    <div class="mc-chart-label-row">
+      <span class="mc-chart-label" style="margin-bottom:0;border-bottom:none;padding-bottom:0;">Scenario Probability Distribution</span>
+      <button class="mc-info-btn" onclick="toggleMcPopup('scenarioPopup')">&#9432;</button>
+    </div>
+    <div class="mc-popup" id="scenarioPopup"><strong>Scenario Probability Distribution</strong><br>Shows the share of 100,000 simulated runs that resolved into each of the 6 escalation paths, from swift de-escalation (S1) to total theater collapse (S6). Hover over a segment or legend item to highlight it.</div>
+    <div class="mc-donut-layout">
+      <div class="mc-donut-canvas-wrap"><canvas id="chartScenarioPie"></canvas></div>
+      <div class="mc-donut-legend" id="scenarioLegend"></div>
+    </div>
+  </div>
+  <div class="mc-chart-block">
+    <div class="mc-chart-label-row">
+      <span class="mc-chart-label" style="margin-bottom:0;border-bottom:none;padding-bottom:0;">Brent Crude Distribution ($/bbl)</span>
+      <button class="mc-info-btn" onclick="toggleMcPopup('oilPopup')">&#9432;</button>
+    </div>
+    <div class="mc-popup" id="oilPopup"><strong>Brent Crude Distribution</strong><br>Frequency of simulated peak Brent prices. Cyan = below $100/bbl, Amber = $100–$120/bbl, Red = above $120/bbl.</div>
+    <div class="chart-wrap mc-chart-canvas-wrap"><canvas id="chartOilDist"></canvas></div>
+  </div>
+  <div class="mc-chart-block">
+    <div class="mc-chart-label-row">
+      <span class="mc-chart-label" style="margin-bottom:0;border-bottom:none;padding-bottom:0;">Global GDP Impact Distribution (%)</span>
+      <button class="mc-info-btn" onclick="toggleMcPopup('gdpPopup')">&#9432;</button>
+    </div>
+    <div class="mc-popup" id="gdpPopup"><strong>Global GDP Impact Distribution</strong><br>Frequency of simulated GDP impact. Cyan = 0% to −2%, Amber = −2% to −4%, Red = below −4%.</div>
+    <div class="chart-wrap mc-chart-canvas-wrap"><canvas id="chartGDPDist"></canvas></div>
+  </div>
+
+  <!-- Percentile Table -->
+  <div style="overflow-x:auto;margin-top:14px;">
+    <div class="font-mono" style="font-size:12px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;">Percentile Distribution — 100,000 Iterations</div>
+    <table class="data-table" style="min-width:600px;">
+      <thead><tr><th>Risk Variable</th><th>P5</th><th>P25</th><th>P50</th><th>P75</th><th>P95</th><th>Mean</th></tr></thead>
+      <tbody id="percentileBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Key Findings -->
+  <div style="margin-top:14px;padding:12px;background:var(--bg-deep);border:1px solid var(--border-dim);border-radius:4px;">
+    <div class="font-mono" style="font-size:12px;color:var(--accent-magenta);margin-bottom:8px;text-transform:uppercase;">Key Probabilistic Findings</div>
+    <div id="mcFindings" class="font-mono" style="font-size:13px;color:var(--text-secondary);line-height:1.8;"></div>
+  </div>
+
+<script>
+  let mcResults=null,previousResults=null,runCount=0;
+  let scenarioPieChart=null,oilHistChart=null,gdpHistChart=null;
+
+  const MC_PRESETS = {
+    base:       {duration:4,  hormuz_min:7,  hormuz_max:120, alliance:30, regime:35, nuclear:8,  proxy:3,   russia:3, iterations:100000},
+    optimistic: {duration:2,  hormuz_min:3,  hormuz_max:30,  alliance:10, regime:50, nuclear:2,  proxy:1.5, russia:1, iterations:100000},
+    escalation: {duration:10, hormuz_min:30, hormuz_max:200, alliance:50, regime:20, nuclear:15, proxy:5,   russia:6, iterations:100000},
+    nuclear:    {duration:12, hormuz_min:45, hormuz_max:365, alliance:60, regime:15, nuclear:35, proxy:6,   russia:7, iterations:100000},
+  };
+
+  function toggleMcPopup(id){document.getElementById(id).classList.toggle('visible');}
+
+  function applyPreset(name){
+    const p=MC_PRESETS[name];if(!p)return;
+    Object.keys(p).forEach(f=>{
+      const sl=document.getElementById('sl_'+f);
+      if(sl){sl.value=p[f];const d=f==='iterations'?Number(p[f]).toLocaleString():(f==='alliance'||f==='regime'||f==='nuclear')?p[f]+'%':String(p[f]);updateParamDisplay(f,d);}
+    });
+    document.querySelectorAll('.mc-preset-btn').forEach(b=>{b.classList.remove('active');if((b.getAttribute('onclick')||'').includes("'"+name+"'"))b.classList.add('active');});
+    document.getElementById('runSimBtn').click();
+  }
+
+  function updateParamDisplay(id,val){const el=document.getElementById('val_'+id);if(el)el.textContent=val;}
+
+  function getSimParams(){return{duration:parseFloat(document.getElementById('sl_duration').value),hormuzMin:parseInt(document.getElementById('sl_hormuz_min').value),hormuzMax:parseInt(document.getElementById('sl_hormuz_max').value),alliance:parseInt(document.getElementById('sl_alliance').value)/100,regime:parseInt(document.getElementById('sl_regime').value)/100,nuclear:parseInt(document.getElementById('sl_nuclear').value)/100,proxy:parseFloat(document.getElementById('sl_proxy').value),russia:parseFloat(document.getElementById('sl_russia').value),iterations:parseInt(document.getElementById('sl_iterations').value)};}
+
+  function logNormal(mean,sd){const mu=Math.log(mean*mean/Math.sqrt(sd*sd+mean*mean));const sigma=Math.sqrt(Math.log(1+(sd*sd)/(mean*mean)));const z=Math.sqrt(-2*Math.log(Math.random()))*Math.cos(2*Math.PI*Math.random());return Math.exp(mu+sigma*z);}
+  function triangular(min,mode,max){if(mode<=min)mode=min+0.01;if(mode>=max)mode=max-0.01;const u=Math.random(),fc=(mode-min)/(max-min);return u<fc?min+Math.sqrt(u*(max-min)*(mode-min)):max-Math.sqrt((1-u)*(max-min)*(max-mode));}
+  function uniform(a,b){return a+Math.random()*(b-a);}
+  function bernoulli(p){return Math.random()<p?1:0;}
+  function poisson(l){let L=Math.exp(-l),k=0,p=1;do{k++;p*=Math.random();}while(p>L);return k-1;}
+  function clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v));}
+  function percentile(arr,p){const s=[...arr].sort((a,b)=>a-b);const i=(p/100)*(s.length-1);const lo=Math.floor(i),hi=Math.ceil(i);return s[lo]+(s[hi]-s[lo])*(i-lo);}
+
+  function runMonteCarloSimulation(){
+    const btn=document.getElementById('runSimBtn'),status=document.getElementById('simStatus');
+    btn.disabled=true;btn.textContent='RUNNING...';
+    const P=getSimParams();status.textContent='Executing '+P.iterations.toLocaleString()+' iterations...';
+    if(mcResults)previousResults={meanOil:mcResults.oilPeaks.reduce((a,b)=>a+b,0)/mcResults.N,meanDur:mcResults.durations.reduce((a,b)=>a+b,0)/mcResults.N,meanGDP:mcResults.gdpImpacts.reduce((a,b)=>a+b,0)/mcResults.N};
+    setTimeout(()=>{
+      const N=P.iterations,oilPeaks=[],durations=[],gdpImpacts=[],casualties=[],humanitarian=[];
+      const scenarios={S1:0,S2:0,S3:0,S4:0,S5:0,S6:0};
+      let pOil100=0,pOil120=0,pOil150=0,pRecess=0,pRegime=0,pNuke=0,pHzb=0,pRussia=0;
+      for(let i=0;i<N;i++){
+        const dur=clamp(logNormal(P.duration,3),1,52),hormuz=clamp(uniform(P.hormuzMin,P.hormuzMax),1,365);
+        const alFrag=bernoulli(P.alliance),regime=bernoulli(P.regime),nuke=bernoulli(P.nuclear);
+        const proxy=clamp(poisson(P.proxy),1,7),russia=triangular(0,P.russia,8);
+        const durF=dur/Math.max(P.duration,1),hrmF=hormuz/30,nukePrem=nuke?40:0;
+        const oil=clamp(84+(durF*15)+(hrmF*20)+nukePrem+(Math.random()-0.5)*30,70,250);
+        const eshock=(oil-70)/70,scDisr=hormuz/90,pxDisr=proxy/7;
+        const gdp=-(eshock*2.5+scDisr*1.5+pxDisr*0.5+nuke*3.0+(Math.random()-0.5)*1.0);
+        const casMult=clamp(logNormal(1.0,1.5),0.5,5.0),cas=Math.round(1200*casMult*durF*(1+nuke*5));
+        const humScore=clamp(Math.round(3+durF*2+(oil>120?2:0)+nuke*3+alFrag),1,10);
+        let sc;if(dur<=3&&oil<95)sc='S1';else if(dur<=6&&oil<115&&!nuke)sc='S2';else if(dur<=12&&!nuke&&proxy<4)sc='S3';else if(proxy>=4&&!nuke)sc='S4';else if(nuke)sc='S5';else if(regime&&dur>8)sc='S6';else sc='S3';
+        scenarios[sc]++;oilPeaks.push(oil);durations.push(dur);gdpImpacts.push(gdp);casualties.push(cas);humanitarian.push(humScore);
+        if(oil>100)pOil100++;if(oil>120)pOil120++;if(oil>150)pOil150++;if(gdp<-2)pRecess++;if(regime)pRegime++;if(nuke)pNuke++;if(proxy>=4)pHzb++;if(russia>5)pRussia++;
+      }
+      mcResults={N,oilPeaks,durations,gdpImpacts,casualties,humanitarian,scenarios};runCount++;
+      const pData=[{name:'Conflict Duration (weeks)',arr:durations},{name:'Brent Peak ($/bbl)',arr:oilPeaks},{name:'Global GDP Impact (%)',arr:gdpImpacts},{name:'Iranian Casualties',arr:casualties},{name:'Humanitarian Score (1-10)',arr:humanitarian}];
+      document.getElementById('percentileBody').innerHTML=pData.map(d=>{
+        const p5=percentile(d.arr,5),p25=percentile(d.arr,25),p50=percentile(d.arr,50),p75=percentile(d.arr,75),p95=percentile(d.arr,95),mean=d.arr.reduce((a,b)=>a+b,0)/N;
+        const fmt=v=>d.name.includes('bbl')?'$'+v.toFixed(1):d.name.includes('GDP')?v.toFixed(2)+'%':d.name.includes('weeks')?v.toFixed(1)+'w':Math.round(v).toLocaleString();
+        return`<tr><td style="color:var(--text-secondary);">${d.name}</td><td style="color:#4ade80;">${fmt(p5)}</td><td style="color:#a3e635;">${fmt(p25)}</td><td style="color:#facc15;">${fmt(p50)}</td><td style="color:#fb923c;">${fmt(p75)}</td><td style="color:#f87171;">${fmt(p95)}</td><td style="color:var(--text-muted);">${fmt(mean)}</td></tr>`;
+      }).join('');
+      const mOil=(oilPeaks.reduce((a,b)=>a+b,0)/N).toFixed(1),mDur=(durations.reduce((a,b)=>a+b,0)/N).toFixed(1),mGDP=(gdpImpacts.reduce((a,b)=>a+b,0)/N).toFixed(2);
+      document.getElementById('mcFindings').innerHTML='P(Oil>$100): <strong style="color:var(--accent-amber);">'+(pOil100/N*100).toFixed(1)+'%</strong> &bull; P(Oil>$120): <strong style="color:var(--accent-red);">'+(pOil120/N*100).toFixed(1)+'%</strong> &bull; P(Oil>$150): <strong style="color:#d946ef;">'+(pOil150/N*100).toFixed(1)+'%</strong><br>P(Recession): <strong style="color:var(--accent-amber);">'+(pRecess/N*100).toFixed(1)+'%</strong> &bull; P(Regime collapse): <strong>'+(pRegime/N*100).toFixed(1)+'%</strong> &bull; P(Nuclear): <strong style="color:var(--accent-red);">'+(pNuke/N*100).toFixed(1)+'%</strong><br>Mean oil: <strong>$'+mOil+'/bbl</strong> &bull; Mean duration: <strong>'+mDur+' wk</strong> &bull; Mean GDP: <strong style="color:var(--accent-red);">'+mGDP+'%</strong>';
+      if(previousResults&&runCount>1){const cO=oilPeaks.reduce((a,b)=>a+b,0)/N,cD=durations.reduce((a,b)=>a+b,0)/N,cG=gdpImpacts.reduce((a,b)=>a+b,0)/N,dO=cO-previousResults.meanOil,dD=cD-previousResults.meanDur,dG=cG-previousResults.meanGDP;const arr=v=>v>0.05?'&#9650;':v<-0.05?'&#9660;':'&#9644;';const clrV=(v,inv)=>(inv?v<-0.05:v>0.05)?'var(--accent-red)':'var(--accent-green)';document.getElementById('mcDeltaBanner').style.display='block';document.getElementById('mcDeltaContent').innerHTML='<span style="color:'+clrV(dO,false)+';">'+arr(dO)+' Oil: '+(dO>=0?'+':'')+dO.toFixed(1)+' $/bbl</span> &bull; <span style="color:'+clrV(dD,false)+';">'+arr(dD)+' Duration: '+(dD>=0?'+':'')+dD.toFixed(1)+' wk</span> &bull; <span style="color:'+clrV(dG,true)+';">'+arr(dG)+' GDP: '+(dG>=0?'+':'')+dG.toFixed(2)+'%</span> <span style="color:var(--text-muted);">(Run #'+runCount+' vs #'+(runCount-1)+')</span>';}
+      renderScenarioPie(scenarios,N);renderOilHist(oilPeaks);renderGDPHist(gdpImpacts);
+      btn.innerHTML='&#10003; ADJUST PARAMETERS &amp; RE-RUN';btn.disabled=false;status.textContent='Run #'+runCount+': '+N.toLocaleString()+' iter | Dur='+P.duration+'wk Hormuz='+P.hormuzMin+'-'+P.hormuzMax+'d Nuc='+(P.nuclear*100).toFixed(0)+'%';
+    },100);
+  }
+
+  function renderScenarioPie(sc,N){
+    const labels=['S1: Swift (<3wk)','S2: Managed (3-6wk)','S3: Prolonged (6-12wk)','S4: Regional War','S5: Nuclear Esc.','S6: Regime Collapse'];
+    const descs=['Conflict resolves within 3 weeks','Managed de-escalation, 3–6 weeks','Prolonged attritional conflict, 6–12 weeks','Full regional war, multiple fronts','Nuclear escalation threshold crossed','Iranian regime collapses'];
+    const data=[sc.S1,sc.S2,sc.S3,sc.S4,sc.S5,sc.S6],colors=['#22c55e','#eab308','#f59e0b','#ef4444','#d946ef','#06b6d4'];
+    if(scenarioPieChart)scenarioPieChart.destroy();
+    const cvs=document.getElementById('chartScenarioPie');cvs.style.width='360px';cvs.style.height='360px';
+    scenarioPieChart=new Chart(cvs,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors.map(c=>c+'bb'),borderColor:colors,borderWidth:2,hoverOffset:12}]},options:{responsive:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:true,callbacks:{label:ctx=>`${(ctx.raw/N*100).toFixed(1)}% — ${ctx.raw.toLocaleString()} runs`}}}}});
+    const legendEl=document.getElementById('scenarioLegend');
+    if(legendEl)legendEl.innerHTML=labels.map((lbl,i)=>`<div class="mc-legend-item"><div class="mc-legend-swatch" style="background:${colors[i]}bb;border:1.5px solid ${colors[i]};"></div><div class="mc-legend-text"><strong>${lbl}</strong><br>${descs[i]}</div><div class="mc-legend-pct">${(data[i]/N*100).toFixed(1)}%</div></div>`).join('');
+  }
+
+  function renderOilHist(arr){
+    const bins=[],step=10,min=70,max=200;
+    for(let b=min;b<max;b+=step)bins.push({lo:b,hi:b+step,count:0});
+    arr.forEach(v=>{const idx=Math.min(Math.floor((v-min)/step),bins.length-1);if(idx>=0)bins[idx].count++;});
+    if(oilHistChart)oilHistChart.destroy();
+    const cvs=document.getElementById('chartOilDist');cvs.style.height='340px';
+    oilHistChart=new Chart(cvs,{type:'bar',data:{labels:bins.map(b=>'$'+b.lo+'-'+b.hi),datasets:[{data:bins.map(b=>b.count),backgroundColor:bins.map(b=>b.lo>=120?'rgba(239,68,68,0.5)':b.lo>=100?'rgba(245,158,11,0.5)':'rgba(6,182,212,0.4)'),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{title:{display:true,text:'Frequency',color:'rgba(148,163,184,0.85)',font:{size:11,family:"'IBM Plex Mono',monospace"}},ticks:{color:'rgba(148,163,184,0.75)',font:{size:10},maxTicksLimit:6},grid:{color:'rgba(255,255,255,0.06)'}},x:{title:{display:true,text:'Brent Crude ($/bbl)',color:'rgba(148,163,184,0.7)',font:{size:10,family:"'IBM Plex Mono',monospace",style:'italic'}},ticks:{display:false},grid:{display:false}}}}});
+  }
+
+  function renderGDPHist(arr){
+    const bins=[],step=0.5,min=-10,max=0;
+    for(let b=min;b<max;b+=step)bins.push({lo:b,hi:b+step,count:0});
+    arr.forEach(v=>{const idx=Math.min(Math.floor((v-min)/step),bins.length-1);if(idx>=0)bins[idx].count++;});
+    if(gdpHistChart)gdpHistChart.destroy();
+    const cvs=document.getElementById('chartGDPDist');cvs.style.height='340px';
+    gdpHistChart=new Chart(cvs,{type:'bar',data:{labels:bins.map(b=>b.lo.toFixed(1)+'%'),datasets:[{data:bins.map(b=>b.count),backgroundColor:bins.map(b=>b.lo<-4?'rgba(239,68,68,0.5)':b.lo<-2?'rgba(245,158,11,0.5)':'rgba(6,182,212,0.4)'),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{title:{display:true,text:'Frequency',color:'rgba(148,163,184,0.85)',font:{size:11,family:"'IBM Plex Mono',monospace"}},ticks:{color:'rgba(148,163,184,0.75)',font:{size:10},maxTicksLimit:6},grid:{color:'rgba(255,255,255,0.06)'}},x:{title:{display:true,text:'GDP Impact (%)',color:'rgba(148,163,184,0.7)',font:{size:10,family:"'IBM Plex Mono',monospace",style:'italic'}},ticks:{display:false},grid:{display:false}}}}});
+  }
+
+  // Auto-run base case on load
+  window.addEventListener('load', () => applyPreset('base'));
+</script>
+</body>
+</html>

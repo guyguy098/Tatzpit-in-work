@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Turn-Based Wargame</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-abyss: #030810; --bg-deep: #020617; --bg-surface: #0f172a; --bg-raised: #1e293b;
+      --border-dim: #1a2744; --border-bright: #243656;
+      --text-primary: #f8fafc; --text-secondary: #cbd5e1; --text-muted: #94a3b8;
+      --accent-red: #ef4444; --accent-amber: #f59e0b; --accent-yellow: #eab308;
+      --accent-green: #22c55e; --accent-cyan: #06b6d4; --accent-blue: #3b82f6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'IBM Plex Sans', system-ui, sans-serif; background: var(--bg-abyss); color: var(--text-primary); padding: 16px; }
+    .font-mono { font-family: 'IBM Plex Mono', monospace; }
+    .card { background: var(--bg-surface); border: 1px solid var(--border-dim); border-radius: 8px; overflow: hidden; margin-bottom: 8px; }
+    .card.collapsed .card-body { display: none; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border-dim); cursor: pointer; user-select: none; background: linear-gradient(90deg, rgba(6,182,212,0.025) 0%, transparent 60%); border-left: 2px solid rgba(6,182,212,0.2); }
+    .card-body { padding: 10px 14px; }
+    .collapse-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; font-size: 12px; color: var(--text-muted); transition: transform 0.2s; }
+    .card:not(.collapsed) .collapse-icon { transform: rotate(0deg); }
+    .card.collapsed .collapse-icon { transform: rotate(-90deg); }
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'IBM Plex Mono', monospace; }
+    .badge-critical { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .badge-high { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.25); }
+    .badge-elevated { background: rgba(234,179,8,0.1); color: #facc15; border: 1px solid rgba(234,179,8,0.2); }
+    .risk-gauge { width: 100%; height: 10px; background: var(--bg-deep); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-dim); }
+    .risk-gauge-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #22c55e 0%, #eab308 40%, #f59e0b 65%, #ef4444 100%); }
+    .chart-wrap { position: relative; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg-deep); } ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div class="chart-wrap" style="margin-bottom:14px;height:260px;">
+    <div class="font-mono" style="font-size:12px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;">Escalation Risk Trajectory (0-100)</div>
+    <canvas id="chartEscalation"></canvas>
+  </div>
+  <div id="turnCardsContainer"></div>
+
+  <script>
+    const turns = [
+      { id:'T0',  isoDate:'2026-02-27', date:'Pre-Feb 28', label:'Pre-War',         risk:65, projected:false, us:'Massive buildup; 2 CSGs; SOTU ultimatum; Geneva fails x3', iran:'Enrichment; protests suppressed; leadership complacent', gulf:'Oman mediates; Qatar hosts; GCC lobbied', key:'Diplomatic failure triggers kinetic phase' },
+      { id:'T1',  isoDate:'2026-02-28', date:'Feb 28',     label:'Initiation',       risk:95, projected:false, us:'Op. Epic Fury: 900 strikes/12hrs; Khamenei killed; nuke sites hit', iran:'Shock then full retaliation: 2,000+ projectiles at 27 bases + all GCC', gulf:'Air defenses activated; airspace closed; emergency meetings', key:'Decapitation triggers pre-delegated retaliation orders' },
+      { id:'T2',  isoDate:'2026-03-01', date:'Mar 1',      label:'Expansion',        risk:98, projected:false, us:'B-2 bombers; Wave 10; CENTCOM mission declared', iran:'Expands to Gulf civilian infra: Dubai airport, Manama, Kuwait', gulf:'3rd carrier deployed; UAE recalls Israel amb.; joint condemnation', key:'Girls school strike; Hormuz de facto closed' },
+      { id:'T3',  isoDate:'2026-03-02', date:'Mar 2',      label:'Peak Crisis',      risk:99, projected:false, us:'Natanz nuclear facility struck', iran:'Formally closes Hormuz; 5th Fleet HQ struck; 150+ ships stranded', gulf:'Qatar LNG halt; Ras Tanura fire; Saudi vows force', key:'Nuclear site strike = extreme escalation marker' },
+      { id:'T4',  isoDate:'2026-03-03', date:'Mar 3-4',    label:'Multi-Front',      risk:97, projected:false, us:'Sub sinks IRIS Dena; continued degradation', iran:'Hezbollah opens Lebanon front (123 KIA, 683 WIA)', gulf:'QatarEnergy Force Majeure; KOSPI -12%; NATO SM-3 intercept', key:'War formally becomes multi-front regional conflict' },
+      { id:'T5',  isoDate:'2026-03-05', date:'Mar 5-6',    label:'Attrition',        risk:92, projected:false, us:'Air supremacy declared; continued strikes', iran:'Missile rate declining; 80% AD destroyed; ~1,000 BMs remain; threatens dirty bomb', gulf:'UAE intercepts 109 drones/day; Russia provides targeting intel', key:'Russian intel sharing = great-power proxy dimension' },
+      { id:'T6',  isoDate:'2026-03-07', date:'Mar 7',      label:'Transition',       risk:88, projected:false, us:'Ongoing heavy strikes; SOF ops possible', iran:'IRGC power struggle; reduced launch capability', gulf:'Emirates suspended; GCC counter-strike debate if attacks >Day 10', key:'Transition from shock-and-awe to sustained degradation' },
+      { id:'T7',  isoDate:'2026-03-08', date:'Mar 8',      label:'Degradation',      risk:84, projected:false, us:'IRGC command node hunting; SOF insertion', iran:'Adapts to guerrilla/asymmetric; internal fractures deepen', gulf:'GCC military entry prob. 40-60%; Hezbollah tunnel ops in Galilee', key:'Russia GPS jamming degrades US precision strikes' },
+      { id:'T8',  isoDate:'2026-03-10', date:'Mar 10',     label:'Stalemate',        risk:80, projected:false, us:'Pause in sustained bombing; focus on High Value Targets', iran:'Cyber attacks to mask command relocation', gulf:'Informal backdoor talks initiated in Oman', key:'Tempo of kinetic attacks drops; cyber warfare spikes' },
+      { id:'T9',  isoDate:'2026-03-11', date:'Mar 11',     label:'Negotiation',      risk:78, projected:false, us:'Consolidating logistics; naval blockade tightened', iran:'Hezbollah drone swarms intercepted; domestic dissent rising', gulf:'Kuwait shipping lanes cleared; Saudi-Iran secret channel', key:'Blockade becomes primary tool of US strategy' },
+      { id:'T10', isoDate:'2026-03-12', date:'Mar 12',     label:'Phase Shift',      risk:74, projected:false, us:'CENTCOM verifies 70% of IRGC missile sites degraded; ceasefire probe', iran:'Interim Supreme Leader Mojtaba signals readiness for "strategic patience"', gulf:'Omani mediation phase 2; ceasefire proposal; oil stabilized', key:'Strategic shift to diplomatic/mediation phase' },
+      { id:'T11', isoDate:'2026-03-13', date:'Mar 13',     label:'TODAY',            risk:75, projected:false, us:'Ceasefire window opens; humanitarian corridors monitored; surveillance surge', iran:'Mojtaba consolidate power; partial rocket pause confirmed; proxy standby', gulf:'Oman confirms 72-hr corridor for energy tankers; shipping lanes de-mined', key:'Operational implementation of the Omani Ceasefire Framework' },
+      { id:'T12', isoDate:'2026-03-20', date:'Mar 20+',    label:'Projected: Reset', risk:55, projected:true,  us:'Gradual drawdown; monitoring phase', iran:'Formal de-escalation negotiations', gulf:'Partial reopening of Hormuz; de-mining initiated', key:'Implementation of the Omani 72-hour ceasefire' },
+      { id:'T13', isoDate:'2026-12-01', date:'Post-War',   label:'Projected: New Order', risk:35, projected:true, us:'New regional defense architecture; US-GCC-ISR pact', iran:'Regime transition / "Guided Sovereignty"', gulf:'Full GCC-Israel normalization possible', key:'Long-term regional restructuring' }
+    ];
+
+    const ctxEsc = document.getElementById('chartEscalation');
+    new Chart(ctxEsc, {
+      type: 'line',
+      data: {
+        labels: turns.map(t => t.id),
+        datasets: [{
+          label: 'Risk Score (0-100)',
+          data: turns.map(t => t.risk),
+          borderColor: 'rgba(239,68,68,0.8)',
+          backgroundColor: 'rgba(239,68,68,0.08)',
+          segment: {
+            borderColor: ctx => turns[ctx.p1DataIndex]?.projected ? 'rgba(217,70,239,0.6)' : 'rgba(239,68,68,0.8)',
+            borderDash:  ctx => turns[ctx.p1DataIndex]?.projected ? [5,5] : []
+          },
+          fill: true, tension: 0.3, pointRadius: 5,
+          pointBackgroundColor: turns.map(t => t.risk > 90 ? '#ef4444' : t.risk > 70 ? '#f59e0b' : t.risk > 50 ? '#eab308' : '#22c55e'),
+          borderWidth: 2
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100 } } }
+    });
+
+    function toggleCard(header) {
+      header.closest('.card').classList.toggle('collapsed');
+    }
+
+    document.getElementById('turnCardsContainer').innerHTML = turns.map((t, i) => `
+      <div class="card${i <= 6 ? ' collapsed' : ''}${t.projected ? '" style="border-style:dashed;opacity:0.85;' : '"'}">
+        <div class="card-header" onclick="toggleCard(this)" style="padding:10px 14px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span class="font-mono" style="font-size:14px;font-weight:700;color:${t.risk>90?'var(--accent-red)':t.risk>70?'var(--accent-amber)':t.risk>50?'var(--accent-yellow)':'var(--accent-green)'};">${t.id}</span>
+            <span style="font-size:14px;font-weight:600;">${t.label}</span>
+            <span class="font-mono" style="font-size:12px;color:var(--text-muted);">${t.date}</span>
+            ${t.projected ? '<span class="badge badge-elevated" style="font-size:9px;">PROJECTED</span>' : ''}
+            ${t.id === 'T11' ? '<span class="badge badge-high" style="font-size:9px;">TODAY</span>' : ''}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="font-mono" style="font-size:13px;font-weight:700;color:${t.risk>90?'var(--accent-red)':t.risk>70?'var(--accent-amber)':'var(--accent-yellow)'};">${t.risk}</div>
+            <span class="collapse-icon">&#9660;</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));font-size:13px;color:var(--text-secondary);line-height:1.5;">
+            <div><span style="color:var(--accent-blue);font-weight:600;">US/Israel:</span> ${t.us}</div>
+            <div><span style="color:var(--accent-red);font-weight:600;">Iran:</span> ${t.iran}</div>
+            <div><span style="color:var(--accent-amber);font-weight:600;">Gulf/Allied:</span> ${t.gulf}</div>
+          </div>
+          <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border-dim);font-size:12px;color:var(--accent-cyan);">Key: ${t.key}</div>
+          <div style="margin-top:6px;"><div class="risk-gauge"><div class="risk-gauge-fill" style="width:${t.risk}%;"></div></div></div>
+        </div>
+      </div>`).join('');
+  </script>
+</body>
+</html>
